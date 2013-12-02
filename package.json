@@ -5,8 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "node-phantom-simple": "~1.0.15",
-    "node-phantom": "~0.2.5",
-    "phantom": "~0.5.4"
+    "node-phantom": "~0.2.5"
   },
   "devDependencies": {},
   "scripts": {
