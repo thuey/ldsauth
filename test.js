@@ -192,4 +192,4 @@ phantom.create(function (err, ph) {
 
     });
   });
-}, { parameters: { 'local-storage-path': '/html5-storage' } });
+}, { parameters: { 'local-storage-path': './html5-storage' } });
