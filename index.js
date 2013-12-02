@@ -1,6 +1,6 @@
 'use strict';
 
-var phantom = require('node-phantom') // phantom, node-phantom, node-phantom-simple
+var phantom = require('node-phantom-simple') // phantom, node-phantom, node-phantom-simple
   , config = require('./config') // TODO restful auth
   ;
 
@@ -11,12 +11,14 @@ phantom.create(function (err, ph) {
 
     function signIn() {
       console.log('attempting sign in');
+
       page.evaluateAsync(function () {
         var intToken
           , failCount = 0
           ;
 
         intToken = setInterval(function () {
+          window.callPhantom('message');
           if (failCount >= 10) {
             clearInterval(intToken);
             window.callPhantom({ error: 'failed a lot', failCount: failCount });
@@ -29,13 +31,15 @@ phantom.create(function (err, ph) {
           }
 
           clearInterval(intToken);
-          $('#username').val(config.username);
-          $('#password').val(config.password);
-          //$('#loginForm').submit();
-          $('#submit').click();
-          window.callPhantom({ failCount: failCount });
+          setTimeout(function () {
+            $('#username').val('USERNAME');
+            $('#password').val('PASSWORD');
+            //$('#loginForm').submit();
+            window.callPhantom({ failCount: failCount });
+            $('#submit').click();
+          }, 1000);
         }, 100);
-      }.toString(), function (err, stuff) {
+      }.toString().replace(/USERNAME/g, config.username).replace(/PASSWORD/g, config.password), function (err, stuff) {
           if (err) {
             console.log('Error at Sign-in');
             console.log(err);
@@ -44,7 +48,7 @@ phantom.create(function (err, ph) {
           }
 
           console.log('submit complete, awaiting url change', stuff);
-      });
+      }, config.username, config.password);
     }
 
     function loadLdsOrgJs() {
@@ -192,4 +196,4 @@ phantom.create(function (err, ph) {
 
     });
   });
-}, { parameters: { 'local-storage-path': '/html5-storage' } });
+}, { parameters: { /*'local-storage-path': './html5-storage'*/ } });
