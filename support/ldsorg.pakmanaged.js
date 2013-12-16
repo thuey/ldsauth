@@ -502,6 +502,7 @@ var global = Function("return this;")();
 
         function hasPouch(Pouch) {
           window.callPhantom('pouch...');
+          /*
           function n() {}
           me.___store = {};
           me.store = {
@@ -515,7 +516,8 @@ var global = Function("return this;")();
             me.getCurrentMeta(cb);
           }, 100);
           return;
-          /*
+          */
+          ///*
           new Pouch('wardmenu-ludrs', function (err, db) {
             window.callPhantom('pouch....');
             me.store = db;
@@ -526,7 +528,7 @@ var global = Function("return this;")();
               me.getCurrentMeta(cb);
             }, 100);
           });
-          */
+          //*/
         }
 
         try {

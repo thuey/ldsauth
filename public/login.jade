@@ -1,0 +1,30 @@
+!!!5
+html
+  head
+  body
+    .row
+      .span12
+        h3 LDSAuth
+        p This site is not an official site of the LDS church.
+        form(id="js-login", name="js-login", action="/api/login", method="POST")
+          input(form="js-login", name="username", type="text", placeholder="LDS.org Username")
+          input(form="js-login", name="password", type="password", placeholder="LDS.org Password")
+          button(type="submit") Login
+        p You must login using your LDS.org account. Your username and password will not be saved*.
+    .row
+      .span12
+        p 
+          span If you don't have an LDS.org account 
+          a(href="https://ldsaccount.lds.org/site/register?isMember=true") sign up at lds.org
+          span . Your Membership Record Number can be found on your 
+          strong Partriachical Blessing
+          span  and your 
+          strong Temple Recommend
+        p No site aside from LDS.org should ever ask you for your MRN.
+    .row
+      .span6
+        //- http://packham.n4m.org/recomm.jpg
+        //img(href="/images/annotated-recommend.jpg")
+      .span6
+        //- http://z.about.com/d/lds/1/8/e/T/2/patriarchal_blessing_sm.jpg
+        //img(href="/images/annotated-pblessing.jpg")
