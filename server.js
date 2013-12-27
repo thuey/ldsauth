@@ -14,6 +14,7 @@
     //, site = require('./site')
     , path = require('path')
     , port = process.argv[2] || 3000
+    , phantom = require('./phantom')
     ;
 
   if (!connect.router) {
@@ -21,7 +22,8 @@
   }
     
   // Passport configuration
-  require('./auth');
+  require('./auth').init();
+
 
   function route(rest) {
     /*
@@ -38,6 +40,53 @@
 
     rest.get('/api/userinfo', user.info);
     rest.get('/api/clientinfo', client.info);
+
+    // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
+    // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
+    rest.get('/api/ldsorg/:stakeId/:wardId', function (req, res) {
+    });
+    rest.get('/api/ldsorg/homeward', function (req, res) {
+      console.log('/api/ldsorg/homeward');
+      if (!req.user || !req.user.username) {
+        res.send({ error: 'no username' });
+        return;
+      }
+      function apiWrap(username, password, callbacks, method, args, done) {
+        console.log('phantom.callApi(...)');
+        phantom.callApi(
+          username
+        , password
+        , 'getData'
+        , [
+            callbacks
+          , method
+          , args
+          ]
+        , function (err, data) {
+            console.log('tried too fast', username);
+            if (data) {
+              data.id = data.currentUserId;
+              data.username = username;
+              data.password = password;
+            }
+            done(err, data);
+          }
+        );
+      }
+
+      apiWrap(
+        req.user.username, req.user.password, [], 'getCurrentWard', [{ fullHouseholds: req.query.fullHouseholds }]
+      , function (currentWard) {
+          res.send(currentWard);
+        }
+      );
+    });
+/*
+    rest.get('/api/ldsorg/homestake', function (req, res) {
+    });
+    rest.get('/api/ldsorg/:stakeId', function (req, res) {
+    });
+*/
   }
     
   // Connect configuration
@@ -48,6 +97,14 @@
     .use(connect.json())
     .use(connect.urlencoded())
     .use(connect.session({ secret: 'keyboard cat' }))
+    .use(function (req, res, next) {
+      if (!res.send) {
+        res.send = function (obj) {
+          res.end(JSON.stringify(obj, null, '  '));
+        };
+      }
+      next();
+     })
     .use(function (req, res, next) {
       if (!res.redirect) {
         res.redirect = function (url) {

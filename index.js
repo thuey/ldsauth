@@ -54,8 +54,8 @@ phantom.create(function (err, ph) {
     function loadLdsOrgJs() {
       setTimeout(function () {
         // wegt 'https://raw.github.com/LDSorg/ldsorgjs/master/ldsorg.pakmanaged.js'
-        page.injectJs('./ldsorg.pakmanaged.js', function (/*err*/) {
-        page.injectJs('./IndexedDBShim.min.js', function (/*err*/) {
+        page.injectJs(path.join(__dirname, 'support', 'ldsorg.pakmanaged.js'), function (/*err*/) {
+        page.injectJs(path.join(__dirname, 'support', 'IndexedDBShim.min.js'), function (/*err*/) {
           if (err) {
             console.log('inejectJs err', err);
             ph.exit();
@@ -179,7 +179,7 @@ phantom.create(function (err, ph) {
       console.log(arguments);
     };
 
-    page.open('https://www.lds.org/directory', function (err, status) {
+    page.open('https://www.lds.org/directory/', function (err, status) {
       console.log('opening page...');
 
       if (err || 'success' !== status) {
@@ -196,4 +196,4 @@ phantom.create(function (err, ph) {
 
     });
   });
-}, { parameters: { 'local-storage-path': './html5-storage' } });
+}, { parameters: { 'local-storage-path': path.join(__dirname, 'html5-storage'), 'disk-cache': 'yes' } });

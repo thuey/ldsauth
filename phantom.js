@@ -1,13 +1,23 @@
 'use strict';
 
 var phantom = require('node-phantom-simple')
+  , fs = require('fs')
   , path = require('path')
+  , forEachAsync = require('forEachAsync').forEachAsync
   , simplestUrl = 'https://www.lds.org/directory/services/ludrs/mem/current-user-id/'
   , ssoUrl = 'https://signin.lds.org/SSOSignIn/'
   , errorUrl = 'https://signin.lds.org/SSOSignIn/?error=authfailed'
+  , signInFnStr = fs.readFileSync(path.join(__dirname, 'support', 'sign-in.js'), 'utf8')
+  , getDataFnStr = fs.readFileSync(path.join(__dirname, 'support', 'get-data.js'), 'utf8')
   ;
 
-module.exports.testLogin = function (username, password, done) {
+function wrapAsync(fnStr) {
+  // ensure that the phantom callback is async
+  return 'function () {\nsetTimeout(' + fnStr + ', 0); return null;\n}';
+}
+
+module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
+  console.log('inside callApi');
   phantom.create(function (err, ph) {
     var abortAll = true
       ;
@@ -19,42 +29,73 @@ module.exports.testLogin = function (username, password, done) {
       });
     }
 
+    /*
+    {
+      // All Household Data
+      householdInit: function (household) {
+        console.log('      ' + household.householdName);
+      }
+    , household: function (household) {
+        console.log('      ' + household.coupleName);
+        //console.log(household);
+      }
+    , householdPhotoInit: function (household) {
+        console.log('        fam pic via ' + household.headOfHousehold.photoUrl);
+      }
+    , householdPhoto: function (household, dataUrl) {
+        console.log('        fam pic' + dataUrl.length, 'bytes as dataUrl');
+      }
+      // TODO spouse and children
+    , individualPhotoInit: function (individual) {
+        console.log('        photo op: ' + (individual.headOfHouse.preferredName));
+      }
+    , individualPhoto: function (individual, dataUrl) {
+        console.log('        photo op: ' + dataUrl.length, 'bytes as dataUrl');
+      }
+    , householdEnd: function (household) {
+        console.log('');
+      }
+    }
+    'getWardData'
+    { fullHouseholds: false }
+    */
+
     console.log('created phantom instance');
     ph.createPage(function(err, page) {
       console.log('created page instance');
 
-      function signIn() {
-        console.log('attempting sign in');
-
-        page.evaluateAsync(function () {
-          var intToken
-            , failCount = 0
+      function injectApiCall(scripts) {
+        console.log('injecting call scripts');
+        forEachAsync(scripts, function (next, scriptName) {
+          console.log(path.join(__dirname, 'support', scriptName));
+          page.injectJs(path.join(__dirname, 'support', scriptName), function (/*err*/) {
+            next();
+          });
+        }).then(function () {
+          var directiveStr = JSON.stringify({ fn: apiFn, args: apiArgs })
+            , fnStr = wrapAsync(getDataFnStr.replace(/__DIRECTIVE__/g, directiveStr))
             ;
 
-          intToken = setInterval(function () {
-            window.callPhantom('message');
-            if (failCount >= 10) {
-              clearInterval(intToken);
-              window.callPhantom({ error: 'failed a lot', failCount: failCount });
-              return;
+          console.log('fnStr');
+          console.log(fnStr);
+          page.evaluate(
+            fnStr
+          , function () {
+              console.log('injectedApiCall');
             }
+          );
+        });
+      }
 
-            if (!window.jQuery || $('#submit').length !== 1) {
-              failCount += 1;
-              return;
-            }
+      function signIn() {
+        console.log('attempting sign in');
+        var fnStr = wrapAsync(signInFnStr.replace(/__USERNAME__/g, username).replace(/__PASSWORD__/g, password))
+          ;
 
-            clearInterval(intToken);
-            setTimeout(function () {
-              $('#username').val('USERNAME');
-              $('#password').val('PASSWORD');
-              //$('#loginForm').submit();
-              window.callPhantom({ failCount: failCount });
-              $('#submit').click();
-            }, 1000);
-          }, 100);
-        }.toString().replace(/USERNAME/g, username).replace(/PASSWORD/g, password)
-      , function (err, stuff) {
+        console.log(fnStr);
+        page.evaluate(
+          fnStr
+        , function (err, stuff) {
             if (err) {
               console.log('Error at Sign-in');
               console.log(err);
@@ -63,7 +104,8 @@ module.exports.testLogin = function (username, password, done) {
             }
 
             console.log('submit complete, awaiting url change', stuff);
-        });
+          }
+        );
       }
 
       page.onResourceRequested = function(requestData, request) {
@@ -85,21 +127,6 @@ module.exports.testLogin = function (username, password, done) {
         console.log('load finished');
       };
 
-      function getMinData() {
-        page.injectJs(path.join(__dirname, 'support', 'jquery-2.0.3.min.js'), function (/*err*/) {
-          page.evaluate(function () {
-              jQuery.get("https://www.lds.org/directory/services/ludrs/mem/current-user-id/", function (id) {
-                jQuery.get("https://www.lds.org/directory/services/ludrs/unit/current-user-ward-stake/", function (data) {
-                  window.callPhantom({ event: 'done', currentUserId: id, currentUserWardStake: data });
-                });
-              });
-            }.toString()
-          , function () {
-            console.log('gotMinData');
-          });
-        });
-      }
-
       page.onUrlChanged = function(targetUrl) {
         console.log('New URL: ' + targetUrl);
         // TODO ignore all requests
@@ -119,7 +146,15 @@ module.exports.testLogin = function (username, password, done) {
             delete page.onLoadFinished;
             abortAll = false;
             console.log('directory load finished');
-            getMinData();
+            if ('getMinData' === apiFn) {
+              injectApiCall(['jquery-2.0.3.min.js']);
+            } else {
+              injectApiCall([
+                'jquery-2.0.3.min.js'
+              , 'ldsorg.pakmanaged.js'
+              , 'IndexedDBShim.min.js'
+              ]);
+            }
           };
         }
       };
@@ -136,6 +171,7 @@ module.exports.testLogin = function (username, password, done) {
       };
 
       page.onError = function (err) {
+        console.error(arguments);
         fin(err);
       };
 
