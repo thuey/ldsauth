@@ -1059,7 +1059,7 @@ var global = Function("return this;")();
     
           me.homeWard = me.wards[me.homeWardId];
     
-          window.callPhantom({ event: 'debug', msg: 'meta' + currentMeta });
+          window.callPhantom({ event: 'debug', msg: currentMeta });
           console.log('meta', currentMeta);
           window.callPhantom({ event: 'debug', msg: 'postlog' });
           fn(currentMeta);
@@ -1073,13 +1073,13 @@ var global = Function("return this;")();
         });
       };
     
-      ldsDirP.getCurrentWard = function (fn) {
+      ldsDirP.getCurrentWard = function (fn, opts) {
         window.callPhantom({ event: 'debug', msg: 'cur ward' });
         console.log('cur ward');
         var me = this
           ;
     
-        me.getWard(fn, me.homeWardId);
+        me.getWard(fn, me.homeWardId, opts);
       };
       ldsDirP.clear = function () {
         var Pouch = require('Pouch');

@@ -57,7 +57,7 @@
         ]
       , function (err, data) {
           console.log('tried too fast', username);
-          if (data) {
+          if (data && data.currentUserId) {
             data.id = data.currentUserId;
             data.username = username;
             data.password = password;
@@ -75,9 +75,9 @@
       }
 
       apiWrap(
-        req.user.username, req.user.password, [], 'getCurrentWard', [{ fullHouseholds: req.query.fullHouseholds }]
-      , function (currentWard) {
-          res.send(currentWard);
+        req.user.username, req.user.password, [], 'getCurrentWard', [{ fullHouseholds: !!req.query.fullHouseholds }]
+      , function (err, currentWard) {
+          res.send(currentWard.value);
         }
       );
     });

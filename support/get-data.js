@@ -23,9 +23,7 @@ function () {
     function getStuff() {
       console.log('getStuff');
       args.unshift(function (_ward) {
-        window.ward = { ward: _ward, blar: true, echo: false };
-        //window.callPhantom('hello' + JSON.stringify({ ward: _ward, title: $('title').text() })) ;
-        console.log("All Done!");
+        window.callPhantom({ event: 'done', value: _ward, title: jQuery('title').text() }) ;
       });
       ldsorg[method].apply(ldsorg, args);
     }
