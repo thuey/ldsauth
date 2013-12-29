@@ -43,35 +43,35 @@
 
     // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
     // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
-    rest.get('/api/ldsorg/:stakeId/:wardId', function (req, res) {
-    });
+
+    function apiWrap(username, password, callbacks, method, args, done) {
+      console.log('phantom.callApi(...)');
+      phantom.callApi(
+        username
+      , password
+      , 'getData'
+      , [
+          callbacks
+        , method
+        , args
+        ]
+      , function (err, data) {
+          console.log('tried too fast', username);
+          if (data) {
+            data.id = data.currentUserId;
+            data.username = username;
+            data.password = password;
+          }
+          done(err, data);
+        }
+      );
+    }
+
     rest.get('/api/ldsorg/homeward', function (req, res) {
       console.log('/api/ldsorg/homeward');
       if (!req.user || !req.user.username) {
         res.send({ error: 'no username' });
         return;
-      }
-      function apiWrap(username, password, callbacks, method, args, done) {
-        console.log('phantom.callApi(...)');
-        phantom.callApi(
-          username
-        , password
-        , 'getData'
-        , [
-            callbacks
-          , method
-          , args
-          ]
-        , function (err, data) {
-            console.log('tried too fast', username);
-            if (data) {
-              data.id = data.currentUserId;
-              data.username = username;
-              data.password = password;
-            }
-            done(err, data);
-          }
-        );
       }
 
       apiWrap(
@@ -85,6 +85,8 @@
     rest.get('/api/ldsorg/homestake', function (req, res) {
     });
     rest.get('/api/ldsorg/:stakeId', function (req, res) {
+    });
+    rest.get('/api/ldsorg/:stakeId/:wardId', function (req, res) {
     });
 */
   }

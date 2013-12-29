@@ -37,13 +37,11 @@ module.exports.init = function () {
   ));
  
   passport.serializeUser(function(user, done) {
-    done(null, user.id);
+    db.users.create(user, done);
   });
 
   passport.deserializeUser(function(id, done) {
-    db.users.find(id, function (err, user) {
-      done(err, user);
-    });
+    db.users.find(id, done);
   });
 
 
