@@ -22,7 +22,7 @@ module.exports.init = function () {
    * a user is logged in before asking them to approve the request.
    */
   passport.use(new LocalStrategy(
-    function(username, password, done) {
+    function (username, password, done) {
       console.log('try local login', username, password);
       phantom.callApi(username, password, 'getMinData', [], function (err, data) {
         console.log('tried too fast', username);
@@ -36,14 +36,13 @@ module.exports.init = function () {
     }
   ));
  
-  passport.serializeUser(function(user, done) {
+  passport.serializeUser(function (user, done) {
     db.users.create(user, done);
   });
 
-  passport.deserializeUser(function(id, done) {
+  passport.deserializeUser(function (id, done) {
     db.users.find(id, done);
   });
-
 
   /**
    * BasicStrategy & ClientPasswordStrategy
@@ -57,8 +56,8 @@ module.exports.init = function () {
    * the specification, in practice it is quite common.
    */
   passport.use(new BasicStrategy(
-    function(username, password, done) {
-      db.clients.findByClientId(username, function(err, client) {
+    function (username, password, done) {
+      db.clients.findByClientId(username, function (err, client) {
         if (err) { return done(err); }
         if (!client) { return done(null, false); }
         if (client.clientSecret !== password) { return done(null, false); }
@@ -68,8 +67,8 @@ module.exports.init = function () {
   ));
 
   passport.use(new ClientPasswordStrategy(
-    function(clientId, clientSecret, done) {
-      db.clients.findByClientId(clientId, function(err, client) {
+    function (clientId, clientSecret, done) {
+      db.clients.findByClientId(clientId, function (err, client) {
         if (err) { return done(err); }
         if (!client) { return done(null, false); }
         if (client.clientSecret !== clientSecret) { return done(null, false); }
@@ -87,35 +86,37 @@ module.exports.init = function () {
    * the authorizing user.
    */
   passport.use(new BearerStrategy(
-    function(accessToken, done) {
+    function (accessToken, done) {
       console.log('accessToken on provider');
       console.log(accessToken);
-      db.accessTokens.find(accessToken, function(err, token) {
+      db.accessTokens.find(accessToken, function (err, token) {
         if (err) { return done(err); }
         if (!token) { return done(null, false); }
 
-        if(token.userID !== null) {
-            db.users.find(token.userID, function(err, user) {
-                if (err) { return done(err); }
-                if (!user) { return done(null, false); }
-                // to keep this example simple, restricted scopes are not implemented,
-                // and this is just for illustrative purposes
-                var info = { scope: '*' }
-                  ;
-                done(null, user, info);
-            });
+        if (token.userID !== null) {
+          db.users.find(token.userID, function (err, user) {
+            if (err) { return done(err); }
+            if (!user) { return done(null, false); }
+            // to keep this example simple, restricted scopes are not implemented,
+            // and this is just for illustrative purposes
+            var info = { scope: '*' }
+              ;
+
+            done(null, user, info);
+          });
         } else {
-            //The request came from a client only since userID is null
-            //therefore the client is passed back instead of a user
-            db.clients.findByClientId(token.clientID, function(err, client) {
-               if(err) { return done(err); }
-                if(!client) { return done(null, false); }
-                // to keep this example simple, restricted scopes are not implemented,
-                // and this is just for illustrative purposes
-                var info = { scope: '*' }
-                  ;
-                done(null, client, info);
-            });
+          //The request came from a client only since userID is null
+          //therefore the client is passed back instead of a user
+          db.clients.findByClientId(token.clientID, function (err, client) {
+            if (err) { return done(err); }
+            if (!client) { return done(null, false); }
+            // to keep this example simple, restricted scopes are not implemented,
+            // and this is just for illustrative purposes
+            var info = { scope: '*' }
+              ;
+
+            done(null, client, info);
+          });
         }
       });
     }

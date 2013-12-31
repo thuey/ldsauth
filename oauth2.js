@@ -26,12 +26,12 @@ var server = oauth2orize.createServer();
 // simple matter of serializing the client's ID, and deserializing by finding
 // the client by ID from the database.
 
-server.serializeClient(function(client, done) {
+server.serializeClient(function (client, done) {
   return done(null, client.id);
 });
 
-server.deserializeClient(function(id, done) {
-  db.clients.find(id, function(err, client) {
+server.deserializeClient(function (id, done) {
+  db.clients.find(id, function (err, client) {
     if (err) { return done(err); }
     return done(null, client);
   });
@@ -84,8 +84,8 @@ server.grant(oauth2orize.grant.token(function (client, user, ares, done) {
 // application issues an access token on behalf of the user who authorized the
 // code.
 
-server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, done) {
-  db.authorizationCodes.find(code, function(err, authCode) {
+server.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, done) {
+  db.authorizationCodes.find(code, function (err, authCode) {
     if (err) { return done(err); }
     if (client.id !== authCode.clientID) { return done(null, false); }
     if (redirectURI !== authCode.redirectURI) { return done(null, false); }
@@ -93,7 +93,7 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
     var token = utils.uid(256)
       ;
 
-    db.accessTokens.save(token, authCode.userID, authCode.clientID, null, function(err) {
+    db.accessTokens.save(token, authCode.userID, authCode.clientID, null, function (err) {
       if (err) { return done(err); }
       done(null, token);
     });
@@ -105,32 +105,32 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectURI, do
 // authorization request for verification. If these values are validated, the
 // application issues an access token on behalf of the user who authorized the code.
 
-server.exchange(oauth2orize.exchange.password(function(client, username, password, scope, done) {
+server.exchange(oauth2orize.exchange.password(function (client, username, password, scope, done) {
 
     //Validate the client
-    db.clients.findByClientId(client.clientId, function(err, localClient) {
+    db.clients.findByClientId(client.clientId, function (err, localClient) {
         if (err) { return done(err); }
         if (localClient === null) {
-            return done(null, false);
+          return done(null, false);
         }
         if (localClient.clientSecret !== client.clientSecret) {
-            return done(null, false);
+          return done(null, false);
         }
         //Validate the user
-        db.users.findByUsername(username, function(err, user) {
+        db.users.findByUsername(username, function (err, user) {
+          if (err) { return done(err); }
+          if(user === null) {
+            return done(null, false);
+          }
+          if(password !== user.password) {
+            return done(null, false);
+          }
+          //Everything validated, return the token
+          var token = utils.uid(256);
+          db.accessTokens.save(token, user.id, client.clientId, scope, function (err) {
             if (err) { return done(err); }
-            if(user === null) {
-                return done(null, false);
-            }
-            if(password !== user.password) {
-                return done(null, false);
-            }
-            //Everything validated, return the token
-            var token = utils.uid(256);
-            db.accessTokens.save(token, user.id, client.clientId, scope, function(err) {
-              if (err) { return done(err); }
-              done(null, token);
-            });
+            done(null, token);
+          });
         });
     });
 }));
@@ -143,21 +143,21 @@ server.exchange(oauth2orize.exchange.password(function(client, username, passwor
 server.exchange(oauth2orize.exchange.clientCredentials(function (client, scope, done) {
 
     //Validate the client
-    db.clients.findByClientId(client.clientId, function(err, localClient) {
-        if (err) { return done(err); }
-        if(localClient === null) {
-            return done(null, false);
-        }
-        if(localClient.clientSecret !== client.clientSecret) {
-            return done(null, false);
-        }
-        var token = utils.uid(256);
+    db.clients.findByClientId(client.clientId, function (err, localClient) {
+      if (err) { return done(err); }
+      if(localClient === null) {
+        return done(null, false);
+      }
+      if(localClient.clientSecret !== client.clientSecret) {
+        return done(null, false);
+      }
+      var token = utils.uid(256);
 
-        //Pass in a null for user id since there is no user with this grant type
-        db.accessTokens.save(token, null, client.clientId, scope, function(err) {
-            if (err) { return done(err); }
-            done(null, token);
-        });
+      //Pass in a null for user id since there is no user with this grant type
+      db.accessTokens.save(token, null, client.clientId, scope, function(err) {
+        if (err) { return done(err); }
+        done(null, token);
+      });
     });
 }));
 

@@ -9,8 +9,8 @@
     , server
     , passport = require('passport')
     , oauth2 = require('./oauth2')
-    , user = require('./user')
-    , client = require('./client')
+    , user = require('./api/user')
+    , client = require('./api/client')
     //, site = require('./site')
     , path = require('path')
     , port = process.argv[2] || 3000
