@@ -50,8 +50,13 @@
       rest.post('/oauth/token', ware);
     });
 
-    rest.get('/api/userinfo', user.info);
-    rest.get('/api/clientinfo', client.info);
+    user.info.forEach(function (ware) {
+      rest.get('/api/userinfo', ware);
+    });
+
+    client.info.forEach(function (ware) {
+      rest.get('/api/clientinfo', ware);
+    });
 
     // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
     // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
