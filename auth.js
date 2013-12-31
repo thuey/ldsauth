@@ -88,6 +88,8 @@ module.exports.init = function () {
    */
   passport.use(new BearerStrategy(
     function(accessToken, done) {
+      console.log('accessToken on provider');
+      console.log(accessToken);
       db.accessTokens.find(accessToken, function(err, token) {
         if (err) { return done(err); }
         if (!token) { return done(null, false); }
