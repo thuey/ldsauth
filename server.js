@@ -34,9 +34,21 @@
     */
     rest.post('/api/login', passport.authenticate('local', { successReturnToOrRedirect: '/account.html', failureRedirect: '/login.html' }));
 
-    rest.get('/dialog/authorize', oauth2.authorization);
-    rest.post('/dialog/authorize/decision', oauth2.decision);
-    rest.post('/oauth/token', oauth2.token);
+    oauth2.authorization.forEach(function (ware) {
+      rest.get('/dialog/authorize', ware);
+    });
+    oauth2.decision.forEach(function (ware) {
+      if (Array.isArray(ware)) {
+        ware.forEach(function (ware) {
+          rest.post('/dialog/authorize/decision', ware);
+        });
+      } else {
+        rest.post('/dialog/authorize/decision', ware);
+      }
+    });
+    oauth2.token.forEach(function (ware) {
+      rest.post('/oauth/token', ware);
+    });
 
     rest.get('/api/userinfo', user.info);
     rest.get('/api/clientinfo', client.info);
@@ -99,6 +111,7 @@
     .use(connect.json())
     .use(connect.urlencoded())
     .use(connect.session({ secret: 'keyboard cat' }))
+    .use(require('connect-jade')({ root: __dirname + "/views", debug: true }))
     .use(function (req, res, next) {
       if (!res.send) {
         res.send = function (obj) {

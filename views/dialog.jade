@@ -1,0 +1,13 @@
+p Hi #{user.name}!
+p
+  b #{client.name}
+  span  is requesting access to your account for 
+  span #{scope}.
+
+p Do you approve?
+
+form(action="/dialog/authorize/decision", method="post")
+  input(name="transaction_id", type="hidden", value="#{transactionID}")
+  div
+    input#allow(type="submit", value="Allow")
+    input#deny(type="submit", value="Deny", name="cancel")

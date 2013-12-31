@@ -178,8 +178,9 @@ server.exchange(oauth2orize.exchange.clientCredentials(function (client, scope, 
 // first, and rendering the `dialog` view. 
 
 exports.authorization = [
-  login.ensureLoggedIn(),
+  login.ensureLoggedIn('/login.html'),
   server.authorization(function(clientID, redirectURI, done) {
+    console.log('hello authorization');
     db.clients.findByClientId(clientID, function(err, client) {
       if (err) { return done(err); }
       // WARNING: For security purposes, it is highly advisable to check that
@@ -190,6 +191,7 @@ exports.authorization = [
     });
   }),
   function(req, res){
+    console.log('going in for the big render!');
     res.render('dialog', {
       transactionID: req.oauth2.transactionID
     , user: req.user
