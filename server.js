@@ -32,7 +32,6 @@
     rest.get('/logout', site.logout);
     rest.get('/account', site.account);
     */
-    rest.post('/api/login', passport.authenticate('local', { successReturnToOrRedirect: '/account.html', failureRedirect: '/login.html' }));
 
     oauth2.authorization.forEach(function (ware) {
       rest.get('/dialog/authorize', ware);
@@ -46,9 +45,15 @@
         rest.post('/dialog/authorize/decision', ware);
       }
     });
+
     oauth2.token.forEach(function (ware) {
       rest.post('/oauth/token', ware);
     });
+
+    rest.post(
+      '/api/login'
+    , passport.authenticate('local', { successReturnToOrRedirect: '/account.html', failureRedirect: '/login.html' })
+    );
 
     user.info.forEach(function (ware) {
       rest.get('/api/userinfo', ware);
@@ -138,6 +143,27 @@
     .use(passport.initialize())
     .use(passport.session())
     .use(connect.errorHandler({ dumpExceptions: true, showStack: true }))
+    .use('/api', function (req, res, next) {
+        console.log('[/api] pass by the api');
+        if (req.user) {
+          next();
+          return;
+        }
+
+        //passport.authenticate('bearer', { session: false }),
+        passport.authenticate('bearer', function (err, data) {
+          if (err || (!data && !/login/.test(req.url))) {
+            res.send({ error: "Unauthorized", code: 401 });
+            return;
+          }
+
+          //req.logIn();
+          console.log('bearer data');
+          console.log(data);
+          req.user = data;
+          next();
+        })(req, res, next);
+      })
     .use(connect.router(route))
     .use(connect.static(path.join(__dirname, 'public')))
     ;
