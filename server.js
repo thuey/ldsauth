@@ -89,13 +89,22 @@
       );
     }
 
+    // GET /directory/services/ludrs/mem/wardDirectory/photos/:ward_unit_no
+    // GET /directory/services/ludrs/mem/householdProfile/:head_of_house_individual_id
+    // GET /photo/url/:id_1,:id_2,:id_x/individual
+    rest.get('/api/ldsorg/photos', function (req, res) {
+      // req.query.ids
+      apiWrap(
+        req.user.username, req.user.password, [], 'getPhotos', [{ ids: req.query.ids, family: true, individual: true }]
+      , function (err, photos) {
+          res.send(photos.value);
+        }
+      );
+
+      res.send();
+    });
     rest.get('/api/ldsorg/homeward', function (req, res) {
       console.log('/api/ldsorg/homeward');
-      if (!req.user || !req.user.username) {
-        res.send({ error: 'no username' });
-        return;
-      }
-
       apiWrap(
         req.user.username, req.user.password, [], 'getCurrentWard', [{ fullHouseholds: !!req.query.fullHouseholds }]
       , function (err, currentWard) {

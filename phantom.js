@@ -16,18 +16,15 @@ function wrapAsync(fnStr) {
   return 'function () {\nsetTimeout(' + fnStr + ', 0); return null;\n}';
 }
 
-module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
-  console.log('inside callApi');
-  phantom.create(function (err, ph) {
-    var abortAll = true
-      ;
+function ifErr(next) {
+  return function (err) {
+    if (err) { throw err; }
+    next();
+  };
+}
 
-    function fin(err, data) {
-      done(err, data);
-      setTimeout(function () {
-        ph.exit();
-      });
-    }
+function noop() {}
+
 
     /*
     {
@@ -60,39 +57,91 @@ module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
     { fullHouseholds: false }
     */
 
+module.exports.callApi = function (done, opts) {
+//module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
+  var username = opts.username
+    , password = opts.pssword
+    , ph = opts.phantom
+    , page = opts.page
+    , apiFn = opts.method
+    , apiArgs = opts.args
+    , emitter = opts.emitter
+    ;
+
+  function callMethod(ph, page) {
+    function injectApiCall(scripts) {
+      function injectJs(next, scriptName) {
+        var scriptPath = path.join(__dirname, 'support', scriptName)
+          ;
+
+        if (!page.loadedScripts[scriptPath]) {
+          page.loadedScripts[scriptPath] = true;
+          page.injectJs(scriptPath, ifErr(next));
+        }
+      }
+
+      function execJs() {
+        var directiveStr = JSON.stringify({ fn: apiFn, args: apiArgs })
+          , fnStr = wrapAsync(getDataFnStr.replace(/__DIRECTIVE__/g, directiveStr))
+          ;
+
+        page.evaluate(fnStr, noop);
+      }
+
+      forEachAsync(scripts, injectJs).then(execJs);
+    }
+
+    page.onUrlChanged = function(targetUrl) {
+      // This shouldn't happen. Abandon ship!
+      ph.exit();
+      console.log('[Unexpected targetUrl]', targetUrl);
+    };
+
+    page.onCallback = function(data) {
+      var event = data.event;
+      delete data.event;
+      emitter.emit(event, data.value);
+    };
+
+    page.onConsoleMessage = function () {
+      console.log('[CONSOLE]');
+      console.log(arguments);
+    };
+
+    page.onError = function (err) {
+      emitter.emit('error', err);
+    };
+
+    if ('getMinData' === apiFn) {
+      injectApiCall(['jquery-2.0.3.min.js']);
+    } else {
+      injectApiCall([
+        'jquery-2.0.3.min.js'
+      , 'ldsorg.pakmanaged.js'
+      , 'IndexedDBShim.min.js'
+      ]);
+    }
+  }
+
+  function initializePage(err, ph) {
+    function fin(err, data) {
+      done(err, data);
+      setTimeout(function () {
+        ph.exit();
+      });
+    }
+
+
     console.log('created phantom instance');
     ph.createPage(function(err, page) {
       console.log('created page instance');
-
-      function injectApiCall(scripts) {
-        console.log('injecting call scripts');
-        forEachAsync(scripts, function (next, scriptName) {
-          console.log(path.join(__dirname, 'support', scriptName));
-          page.injectJs(path.join(__dirname, 'support', scriptName), function (/*err*/) {
-            next();
-          });
-        }).then(function () {
-          var directiveStr = JSON.stringify({ fn: apiFn, args: apiArgs })
-            , fnStr = wrapAsync(getDataFnStr.replace(/__DIRECTIVE__/g, directiveStr))
-            ;
-
-          console.log('fnStr');
-          console.log(fnStr);
-          page.evaluate(
-            fnStr
-          , function () {
-              console.log('injectedApiCall');
-            }
-          );
-        });
-      }
+      page.loadedScripts = {};
 
       function signIn() {
         console.log('attempting sign in');
         var fnStr = wrapAsync(signInFnStr.replace(/__USERNAME__/g, username).replace(/__PASSWORD__/g, password))
           ;
 
-        console.log(fnStr);
         page.evaluate(
           fnStr
         , function (err, stuff) {
@@ -108,18 +157,9 @@ module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
         );
       }
 
-      page.onResourceRequested = function(requestData, request) {
+      page.onResourceRequested = function(requestData/*, request*/) {
         console.log('Requesting "', requestData[0].url.substr(0, 100), '"', requestData.length);
-        if (request && abortAll && !/jquery/i.test(requestData[0].url)) {
-          // TODO don't load any images or css
-          request.abort();
-        }
-        /*
-        if ((/http:\/\/.+?\.css/gi).test(requestData['url']) || requestData['Content-Type'] == 'text/css') {
-          console.log('The url of the request is matching. Aborting: ' + requestData['url']);
-          request.abort();
-        }
-        */
+        // TODO request.abort()
       };
 
       page.onLoadFinished = function () {
@@ -128,6 +168,7 @@ module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
       };
 
       page.onUrlChanged = function(targetUrl) {
+        page.loadedScripts = {};
         console.log('New URL: ' + targetUrl);
         // TODO ignore all requests
         if (targetUrl === ssoUrl) {
@@ -140,21 +181,9 @@ module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
         } else if (errorUrl === targetUrl) {
           fin(new Error('Login attempt failed'));
         } else if (simplestUrl === targetUrl) {
-          console.log('Prepare for load ldsorgjs');
-          abortAll = true;
           page.onLoadFinished = function () {
             delete page.onLoadFinished;
-            abortAll = false;
-            console.log('directory load finished');
-            if ('getMinData' === apiFn) {
-              injectApiCall(['jquery-2.0.3.min.js']);
-            } else {
-              injectApiCall([
-                'jquery-2.0.3.min.js'
-              , 'ldsorg.pakmanaged.js'
-              , 'IndexedDBShim.min.js'
-              ]);
-            }
+            callMethod(ph, page);
           };
         }
       };
@@ -185,5 +214,14 @@ module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
         }
       });
     });
-  }, { parameters: { 'local-storage-path': path.join(__dirname, 'html5-storage'), 'disk-cache': 'true' } });
+  }
+
+  if (!page) {
+    phantom.create(
+      initializePage
+    , { parameters: { 'local-storage-path': path.join(__dirname, 'html5-storage'), 'disk-cache': 'true' } }
+    );
+  } else {
+    callMethod(ph, page);
+  }
 };
