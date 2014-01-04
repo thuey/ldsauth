@@ -15,7 +15,8 @@
     "passport-http": "~0.2.2",
     "passport-oauth2-client-password": "~0.1.1",
     "passport-http-bearer": "~1.0.1",
-    "forEachAsync": "~3.0.0-rc1"
+    "forEachAsync": "~3.0.0-rc1",
+    "phantom-emitter": "~1.0.0"
   },
   "devDependencies": {},
   "scripts": {
