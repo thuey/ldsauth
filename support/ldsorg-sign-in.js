@@ -1,12 +1,13 @@
-function () {
+(function () {
   'use strict';
 
   var intToken
     , failCount = 0
     ;
 
+  // NOTE: there's no success callback because on success
+  // the page reloads and phantom's onUrlChanged event fires
   intToken = setInterval(function () {
-    window.callPhantom({ event: 'debug', msg: 'message' });
     if (failCount >= 10) {
       clearInterval(intToken);
       window.callPhantom({ event: 'error', error: 'failed a lot', failCount: failCount });
@@ -23,8 +24,7 @@ function () {
       $('#username').val('__USERNAME__');
       $('#password').val('__PASSWORD__');
       //$('#loginForm').submit();
-      window.callPhantom({ event: 'debug', failCount: failCount });
       $('#submit').click();
     }, 1000);
   }, 100);
-}
+}());

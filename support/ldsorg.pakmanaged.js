@@ -479,29 +479,16 @@ var global = Function("return this;")();
       , "BEEHIVE"
       , "ADULTS" // the lone plural organization
       ];
-    
-      ldsDirP._emit = function (event) {
-        if (!this._listeners[event]) {
-          return;
-        }
-    
-        var args = [].slice.call(arguments, 1)
-          ;
-    
-        this._listeners[event].apply(this, args);
-      };
-    
-      ldsDirP.init = function (cb, fns) {
-        window.callPhantom({ event: 'debug', msg: 'init' });
+   
+      ldsDirP.init = function (cb, eventer) {
         var me = this
           ;
     
-        me._listeners = fns || {};
+        me._emit = eventer || function () {};
     
         me._emit('cacheInit');
 
         function hasPouch(Pouch) {
-          window.callPhantom({ event: 'debug', msg: 'pouch...' });
           /*
           function n() {}
           me.___store = {};
@@ -519,11 +506,9 @@ var global = Function("return this;")();
           */
           ///*
           new Pouch('wardmenu-ludrs', function (err, db) {
-            window.callPhantom({ event: 'debug', msg: 'pouch....' });
             me.store = db;
             setTimeout(function () {
               me._emit('cacheReady');
-              window.callPhantom({ event: 'debug', msg: 'pouch... ready' });
               console.log('pouch ready');
               me.getCurrentMeta(cb);
             }, 100);
@@ -539,16 +524,20 @@ var global = Function("return this;")();
         }
 
         $.get('http://thewardmenu.com/pouchdb-nightly.js', function (jsText) {
-          window.callPhantom({ event: 'debug', msg: 'pouch' });
           // some crazy illegal token hack
           $(['<sc', 'ript>'].join('') + jsText + '</' + 'script' + '>').appendTo('body');
-          window.callPhantom({ event: 'debug', msg: 'pouch.' });
           var Pouch = require('Pouch');
-          window.callPhantom({ event: 'debug', msg: 'pouch..' });
           hasPouch(Pouch);
         }, 'text');
       };
     
+      ldsDirP.getCurrentUserId = function (fn) {
+        me._getJSON(LdsDir.getCurrentUserIdUrl(), function (err, _id) {
+          emitter.emit('currentUserId', _id);
+          fn(_id);
+        });
+      };
+
       ldsDirP.getHousehold = function (fn, profileOrId) {
         var me = this
           , jointProfile
@@ -860,7 +849,6 @@ var global = Function("return this;")();
       // (but always include phone from photos)
       // TODO most of this logic should be moved to getHouseholds
       ldsDirP.getWard = function (fn, wardOrId, opts) {
-        window.callPhantom({ event: 'debug', msg: 'get ward' });
         console.log('get ward');
         opts = opts || {};
     
@@ -889,13 +877,10 @@ var global = Function("return this;")();
         }
     
         function getWardRoles() {
-          window.callPhantom({ event: 'debug', msg: 'ward roles' });
           me.getWardCallings(function (callings) {
-            window.callPhantom({ event: 'debug', msg: 'ward callings' });
             ward.callings = callings;
     
             me.getWardOrganizations(function (orgs) {
-              window.callPhantom({ event: 'debug', msg: 'ward organization' });
               ward.organizations = orgs;
     
               me._emit('ward', ward);
@@ -910,13 +895,10 @@ var global = Function("return this;")();
         }
     
         function getWardRoster() {
-          window.callPhantom({ event: 'debug', msg: 'ward roster' });
           me._getJSON(LdsDir.getMemberListUrl(id), join.add());
           me._getJSON(LdsDir.getPhotosUrl(id), join.add());
     
-          window.callPhantom({ event: 'debug', msg: 'ward roster 2' });
           join.then(function (memberListArgs, photoListArgs) {
-            window.callPhantom({ event: 'debug', msg: 'ward roster post join' });
             var memberList = memberListArgs[1]
               , photoList = photoListArgs[1]
               ;
@@ -1059,11 +1041,8 @@ var global = Function("return this;")();
     
           me.homeWard = me.wards[me.homeWardId];
     
-          window.callPhantom({ event: 'debug', msg: currentMeta });
           console.log('meta', currentMeta);
-          window.callPhantom({ event: 'debug', msg: 'postlog' });
           fn(currentMeta);
-          window.callPhantom({ event: 'debug', msg: 'postmeta' });
         }
     
         me._getJSON(LdsDir.getCurrentMetaUrl(), function (err, areaInfo) {
@@ -1074,7 +1053,6 @@ var global = Function("return this;")();
       };
     
       ldsDirP.getCurrentWard = function (fn, opts) {
-        window.callPhantom({ event: 'debug', msg: 'cur ward' });
         console.log('cur ward');
         var me = this
           ;
