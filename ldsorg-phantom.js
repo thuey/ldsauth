@@ -1,20 +1,16 @@
 'use strict';
 
-var phantom = require('node-phantom-simple')
+var Phantom = require('node-phantom-simple')
+  , PhantomEmitter = require('phantom-emitter')
   , fs = require('fs')
   , path = require('path')
   , forEachAsync = require('forEachAsync').forEachAsync
   , simplestUrl = 'https://www.lds.org/directory/services/ludrs/mem/current-user-id/'
   , ssoUrl = 'https://signin.lds.org/SSOSignIn/'
   , errorUrl = 'https://signin.lds.org/SSOSignIn/?error=authfailed'
-  , signInFnStr = fs.readFileSync(path.join(__dirname, 'support', 'sign-in.js'), 'utf8')
-  , getDataFnStr = fs.readFileSync(path.join(__dirname, 'support', 'get-data.js'), 'utf8')
+  , signInFnStr = fs.readFileSync(path.join(__dirname, 'support', 'ldsorg-sign-in.js'), 'utf8')
+  , clientApiPath = path.join(__dirname, 'support', 'ldsorg-api-wrapper.js')
   ;
-
-function wrapAsync(fnStr) {
-  // ensure that the phantom callback is async
-  return 'function () {\nsetTimeout(' + fnStr + ', 0); return null;\n}';
-}
 
 function ifErr(next) {
   return function (err) {
@@ -22,9 +18,6 @@ function ifErr(next) {
     next();
   };
 }
-
-function noop() {}
-
 
     /*
     {
@@ -58,58 +51,85 @@ function noop() {}
     */
 
 module.exports.callApi = function (done, opts) {
-//module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
   var username = opts.username
-    , password = opts.pssword
-    , ph = opts.phantom
+    , password = opts.password
+    , phantom = opts.phantom
     , page = opts.page
+    , emitter = opts.emitter
     , apiFn = opts.method
     , apiArgs = opts.args
-    , emitter = opts.emitter
+    , eventNameI = 1
     ;
 
-  function callMethod(ph, page) {
+  function nextEventName() {
+    if (eventNameI >= 40) {
+      eventNameI = 0;
+    }
+
+    eventNameI += 1;
+    return '_ldsorgDone-' + eventNameI;
+  }
+
+  function callMethod(phantom, page, emitter) {
+
     function injectApiCall(scripts) {
       function injectJs(next, scriptName) {
         var scriptPath = path.join(__dirname, 'support', scriptName)
           ;
 
-        if (!page.loadedScripts[scriptPath]) {
-          page.loadedScripts[scriptPath] = true;
+        if (!page._loadedScripts[scriptPath]) {
+          page._loadedScripts[scriptPath] = true;
           page.injectJs(scriptPath, ifErr(next));
         }
       }
 
       function execJs() {
-        var directiveStr = JSON.stringify({ fn: apiFn, args: apiArgs })
-          , fnStr = wrapAsync(getDataFnStr.replace(/__DIRECTIVE__/g, directiveStr))
+        var doneEvent = nextEventName()
           ;
 
-        page.evaluate(fnStr, noop);
+        emitter.once(doneEvent, function (data) {
+          done(
+            null
+          , { username: username
+            , password: password
+            , phantom: phantom
+            , page: page
+            , emitter: emitter
+            , event: doneEvent
+            }
+          , data
+          );
+        });
+
+        page.injectJs(clientApiPath, function () {
+          console.log('loaded wrapper in browser');
+          emitter.on('ldsorgReady', function () {
+          /*
+            console.log('[ldsorgReady]');
+            //emitter.emit('directive', doneEvent, apiFn, apiArgs);
+          */
+          });
+        });
       }
 
       forEachAsync(scripts, injectJs).then(execJs);
     }
 
     page.onUrlChanged = function(targetUrl) {
+      page._loadedScripts = {};
       // This shouldn't happen. Abandon ship!
-      ph.exit();
       console.log('[Unexpected targetUrl]', targetUrl);
-    };
-
-    page.onCallback = function(data) {
-      var event = data.event;
-      delete data.event;
-      emitter.emit(event, data.value);
+      phantom.exit();
     };
 
     page.onConsoleMessage = function () {
+      var args = [].slice.apply(arguments);
       console.log('[CONSOLE]');
-      console.log(arguments);
+      console.log(args);
     };
 
     page.onError = function (err) {
-      emitter.emit('error', err);
+      emitter.emit('scriptError', err);
     };
 
     if ('getMinData' === apiFn) {
@@ -123,41 +143,55 @@ module.exports.callApi = function (done, opts) {
     }
   }
 
-  function initializePage(err, ph) {
+  function initializePage(err, _phantom) {
+    phantom = _phantom;
+
     function fin(err, data) {
-      done(err, data);
-      setTimeout(function () {
-        ph.exit();
-      });
+      var meta
+        ;
+
+      if (!err) {
+        meta = {
+           username: username
+        , password: password
+        , phantom: phantom
+        , page: page
+        , emitter: emitter
+        };
+      } else {
+        setTimeout(function () { phantom.exit(); });
+      }
+
+      done(err, meta, data);
     }
 
-
     console.log('created phantom instance');
-    ph.createPage(function(err, page) {
+    phantom.createPage(function (err, _page) {
       console.log('created page instance');
-      page.loadedScripts = {};
+      page = _page;
+
+      page._loadedScripts = {};
 
       function signIn() {
-        console.log('attempting sign in');
-        var fnStr = wrapAsync(signInFnStr.replace(/__USERNAME__/g, username).replace(/__PASSWORD__/g, password))
-          ;
+        console.log('attempting sign in as', username + ":" + (!!password && '[hidden]'));
 
+        // TODO
         page.evaluate(
-          fnStr
-        , function (err, stuff) {
-            if (err) {
-              console.log('Error at Sign-in');
-              console.log(err);
-              ph.exit();
+          signInFnStr.replace(/__USERNAME__/g, username).replace(/__PASSWORD__/g, password)
+        , function (err) {
+            if (!err) {
               return;
             }
 
-            console.log('submit complete, awaiting url change', stuff);
+            console.log('Error at Sign-in');
+            console.log(err);
+            phantom.exit();
+            return;
           }
         );
       }
 
-      page.onResourceRequested = function(requestData/*, request*/) {
+      page.onResourceRequested = function (requestData/*, request*/) {
         console.log('Requesting "', requestData[0].url.substr(0, 100), '"', requestData.length);
         // TODO request.abort()
       };
@@ -167,61 +201,59 @@ module.exports.callApi = function (done, opts) {
         console.log('load finished');
       };
 
-      page.onUrlChanged = function(targetUrl) {
-        page.loadedScripts = {};
+      function signInOnLoaded() {
+        delete page.onLoadFinished;
+        signIn();
+      }
+
+      function callMethodOnLoaded() {
+        emitter = new PhantomEmitter(page);
+
+        delete page.onLoadFinished;
+        callMethod(phantom, page, emitter);
+      }
+
+      page.onUrlChanged = function (targetUrl) {
+        page._loadedScripts = {};
         console.log('New URL: ' + targetUrl);
         // TODO ignore all requests
         if (targetUrl === ssoUrl) {
-          console.log('Prepare for sign in');
-          page.onLoadFinished = function () {
-            delete page.onLoadFinished;
-            console.log('sign-in load finished');
-            signIn();
-          };
+          page.onLoadFinished = signInOnLoaded;
         } else if (errorUrl === targetUrl) {
           fin(new Error('Login attempt failed'));
         } else if (simplestUrl === targetUrl) {
-          page.onLoadFinished = function () {
-            delete page.onLoadFinished;
-            callMethod(ph, page);
-          };
-        }
-      };
-
-      page.onCallback = function(data) {
-        console.log('CALLBACK: ' + JSON.stringify(data));  // Prints 'CALLBACK: { "hello": "world" }'
-        if (data && 'done' === data.event) {
-          fin(null, data);
+          page.onLoadFinished = callMethodOnLoaded;
         }
       };
 
       page.onConsoleMessage = function () {
-        console.log(arguments);
+        var args = [].slice.apply(arguments);
+        console.log('[console]', args);
       };
 
       page.onError = function (err) {
-        console.error(arguments);
+        console.error('[error]');
+        console.error(err);
         fin(err);
       };
 
       page.open(simplestUrl, function (err, status) {
-        console.log('opening page...');
+        console.log('opening page...', status);
 
         if (err || 'success' !== status) {
           console.log('err, status', err, status);
           fin(err || new Error('Not Successful'));
-          return;
         }
       });
     });
   }
 
   if (!page) {
-    phantom.create(
+    Phantom.create(
       initializePage
     , { parameters: { 'local-storage-path': path.join(__dirname, 'html5-storage'), 'disk-cache': 'true' } }
     );
   } else {
-    callMethod(ph, page);
+    callMethod(phantom, page, emitter);
   }
 };

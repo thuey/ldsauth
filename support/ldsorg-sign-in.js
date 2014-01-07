@@ -1,4 +1,4 @@
-(function () {
+function () {
   'use strict';
 
   var intToken
@@ -27,4 +27,4 @@
       $('#submit').click();
     }, 1000);
   }, 100);
-}());
+}

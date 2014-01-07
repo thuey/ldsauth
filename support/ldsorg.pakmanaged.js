@@ -532,6 +532,7 @@ var global = Function("return this;")();
       };
     
       ldsDirP.getCurrentUserId = function (fn) {
+        console.log('getCurrentUserId');
         me._getJSON(LdsDir.getCurrentUserIdUrl(), function (err, _id) {
           emitter.emit('currentUserId', _id);
           fn(_id);

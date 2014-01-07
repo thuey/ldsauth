@@ -14,7 +14,8 @@
     //, site = require('./site')
     , path = require('path')
     , port = process.argv[2] || 3000
-    , phantom = require('./phantom')
+    , ldsPhantom = require('./ldsorg-phantom')
+    , EventEmitter = require('events').EventEmitter
     ;
 
   if (!connect.router) {
@@ -23,7 +24,6 @@
     
   // Passport configuration
   require('./auth').init();
-
 
   function route(rest) {
     /*
@@ -66,25 +66,31 @@
     // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
     // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
 
-    function apiWrap(username, password, callbacks, method, args, done) {
+    /*
+
+    module.exports.callApi = function (done, opts) {
+    //module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
+      var username = opts.username
+        , password = opts.pssword
+        , ph = opts.phantom
+        , page = opts.page
+        , apiFn = opts.method
+        , apiArgs = opts.args
+        , emitter = opts.emitter
+        ;
+
+    */
+    function apiWrap(user, method, args, done) {
       console.log('phantom.callApi(...)');
-      phantom.callApi(
-        username
-      , password
-      , 'getData'
-      , [
-          callbacks
-        , method
-        , args
-        ]
-      , function (err, data) {
-          console.log('tried too fast', username);
-          if (data && data.currentUserId) {
-            data.id = data.currentUserId;
-            data.username = username;
-            data.password = password;
-          }
+      user.emitter.
+      ldsPhantom.callApi(
+        function (err, sesh) {
           done(err, data);
+        }
+      , { username: user.username
+        , password: user.password
+        , method: method
+        , args: args
         }
       );
     }
@@ -95,7 +101,7 @@
     rest.get('/api/ldsorg/photos', function (req, res) {
       // req.query.ids
       apiWrap(
-        req.user.username, req.user.password, [], 'getPhotos', [{ ids: req.query.ids, family: true, individual: true }]
+        req.user, [], 'getPhotos', [{ ids: req.query.ids, family: true, individual: true }]
       , function (err, photos) {
           res.send(photos.value);
         }
@@ -106,7 +112,7 @@
     rest.get('/api/ldsorg/homeward', function (req, res) {
       console.log('/api/ldsorg/homeward');
       apiWrap(
-        req.user.username, req.user.password, [], 'getCurrentWard', [{ fullHouseholds: !!req.query.fullHouseholds }]
+        req.user, [], 'getCurrentWard', [{ fullHouseholds: !!req.query.fullHouseholds }]
       , function (err, currentWard) {
           res.send(currentWard.value);
         }

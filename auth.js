@@ -9,7 +9,7 @@ var passport = require('passport')
   , ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy
   , BearerStrategy = require('passport-http-bearer').Strategy
   , db = require('./db')
-  , phantom = require('./phantom')
+  , ldsPhantom = require('./ldsorg-phantom')
   ;
 
 module.exports.init = function () {
@@ -23,16 +23,37 @@ module.exports.init = function () {
    */
   passport.use(new LocalStrategy(
     function (username, password, done) {
-      console.log('try local login', username, password);
-      phantom.callApi(username, password, 'getMinData', [], function (err, data) {
-        console.log('tried too fast', username);
-        if (data) {
-          data.id = data.currentUserId;
-          data.username = username;
-          data.password = password;
+      var session = {}
+        ;
+
+      console.log('try local login', username, !!password && 'password:true');
+      ldsPhantom.callApi(
+        function (err, sesh, id) {
+          if (err) {
+            done(err);
+            return;
+          }
+
+          session.username = sesh.username;
+          session.password = sesh.password;
+          session.phantom = sesh.phantom;
+          session.page = sesh.page;
+          session.emitter = sesh.emitter;
+
+          if (!id) {
+            done(new Error("couldn't retrieve id"));
+            return;
+          }
+
+          session.id = id;
+          done(null, session);
         }
-        done(err, data);
-      });
+      , { username: username
+        , password: password
+        , method: 'getCurrentUserId'
+        , args: []
+        }
+      );
     }
   ));
  
