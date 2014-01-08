@@ -66,11 +66,8 @@ module.exports.init = function (LdsDir, ldsDirP) {
       return;
     }
 
-    console.log(imgSrc);
+    // encoding is utf8 by default
     request.get('https://www.lds.org' + imgSrc, { jar: me.__jar, encoding: null }, function (err, res, body) {
-      console.log(typeof err);
-      console.log(typeof body);
-      console.log(Buffer.isBuffer(body));
       next(err, body && ('data:image/jpeg;base64,' + body.toString('base64')) || "");
     });
   };
