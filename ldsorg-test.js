@@ -4,6 +4,7 @@
   var fs = require('fs')
     , LdsOrg = require('./ldsorg-api')
     , ldsorg
+    , ts = Date.now()
     ;
 
   function log(event, a, b, c, d) {
@@ -11,6 +12,7 @@
   }
 
   function getErDone() {
+    console.log('User Meta Data Gathered', ((Date.now() - ts) / 1000).toFixed(2) + 's');
     /*
     ldsorg.getHouseholdWithPhotos(function (data) {
       console.log(data);
