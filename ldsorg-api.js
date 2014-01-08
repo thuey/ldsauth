@@ -253,7 +253,7 @@
     me._emit('cacheInit');
     me.initCache(function () {
       me._emit('cacheReady');
-      me.getCurrentMeta(cb);
+      me.getUserMeta(cb);
     });
   };
 

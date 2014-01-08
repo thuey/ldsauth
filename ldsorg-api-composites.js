@@ -2,10 +2,93 @@ module.exports.init = function (LdsDir, ldsDirP) {
   'use strict';
 
   var Join =  require('join')
-    , forEachAsync =  require('forEachAsync').forEachAsync
+    //, forEachAsync = require('forEachAsync').forEachAsync
+    , Lateral = require('./lateral').Lateral
+    , nThreads = 6
     ;
 
   ldsDirP.cmps = {};
+
+  //
+  // Session Composite
+  //
+  ldsDirP.cmps.getUserMeta = function (fn) {
+    var me = this
+      //, areaInfoId = 'area-info'
+      //, stakesInfoId = 'stakes-info'
+      , join = Join.create()
+      , userJ = join.add()
+      , metaJ = join.add()
+      , stakeJ = join.add()
+      ;
+
+      me.areas = {};
+      me.wards = {};
+      me.stakes = {};
+
+      me.homeArea = {};
+
+    me.getCurrentUserId(function (userId) {
+      me.currentUserId = userId;
+
+      userJ(null, userId);
+    });
+    me.getCurrentUnits(function (units) {
+      me._areaMeta = units;
+      me.homeAreaId = units.areaUnitNo;
+      me.homeStakeId = units.stakeUnitNo;
+      me.homeWardId = units.wardUnitNo;
+      me.homeArea.areaUnitNo = units.areaUnitNo;
+
+      metaJ(null, units);
+    });
+    me.getCurrentStakes(function (stakes) {
+      me.homeArea.stakes = stakes;
+      me.homeAreaStakes = {};
+      me.homeArea.stakes.forEach(function (stake) {
+        me.homeAreaStakes[stake.stakeUnitNo] = stake;
+        me.stakes[stake.stakeUnitNo] = stake;
+      });
+      // TODO me._emit('area', me.homeArea);
+
+      Object.keys(me.stakes).forEach(function (stakeNo) {
+        var stake = me.stakes[stakeNo]
+          ;
+
+        stake.wards.forEach(function (ward) {
+          me.wards[ward.wardUnitNo] = ward;
+        });
+      });
+
+      stakeJ(null, stakes);
+    });
+
+    join.when(function (userArgs, unitArgs, stakeArgs) {
+      var meta
+        ;
+
+      meta = {
+        currentUserId: userArgs[1]
+      , currentUnits: unitArgs[1]
+      , currentStakes: stakeArgs[1]
+      };
+
+      me.homeStake = me.stakes[me.homeStakeId];
+      me.homeStakeWards = {};
+      me.homeStake.wards.forEach(function (ward) {
+        me.homeStakeWards[ward.wardUnitNo] = ward;
+      });
+
+      me.homeWard = me.wards[me.homeWardId];
+
+      me._emit('meta', meta);
+      fn(meta);
+    });
+  };
+
+  //
+  // Ward Composite
+  //
   ldsDirP.cmps.getHouseholdWithPhotos = function (fn, profileOrId, opts) {
     var join = Join.create()
       , me = this
@@ -146,7 +229,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
       fn(orgs);
     }
 
-    forEachAsync(orgnames, function (next, orgname) {
+    Lateral.create(function (next, orgname) {
       // UPPER_UNDERSCORE to camelCase
       var orgnameL = orgname
         .toLowerCase()
@@ -158,8 +241,8 @@ module.exports.init = function (LdsDir, ldsDirP) {
         members.organizationName = orgnameL;
         orgs[orgnameL] = members;
         next();
-      }, ward, orgname, orgnameL);
-    }).then(gotAllOrgs);
+      }, ward, orgname);
+    }, nThreads).add(orgnames).when(gotAllOrgs);
   };
 
   ldsDirP.cmps.getCurrentWardOrganizations = function (fn, orgnames) {
@@ -181,48 +264,19 @@ module.exports.init = function (LdsDir, ldsDirP) {
         fn(groups);
       }
 
-      forEachAsync(positions, function (next, group) {
+      Lateral.create(function (next, group) {
         me.getWardLeadership(function (list) {
           group.leaders = list.leaders;
           group.unitName = list.unitName;
           groups.push(group);
           next();
         }, ward, group);
-      }).then(gotAllWardCallings);
+      }, nThreads).add(positions).when(gotAllWardCallings);
     }, ward);
   };
 
   ldsDirP.cmps.getCurrentWardCallings = function (fn) {
     this.getWardCallings(fn, this.homeWard);
-  };
-
-  ldsDirP.cmps.getStakeCallings = function (fn, stake) {
-    var me = this
-      ;
-
-    me._emit('stakeCallingsInit', stake);
-    me.getStakePositions(function (_positions) {
-      var positions = _positions.unitLeadership || _positions.stakeLeadership
-        , groups = []
-        ;
-
-      function gotAllStakeCallings() {
-        me._emit('stakeCallings', stake, groups);
-        fn(groups);
-      }
-
-      forEachAsync(positions, function (next, group) {
-        me.getStakeLeadership(function (list) {
-          group.leaders = list.leaders;
-          group.unitName = list.unitName;
-          groups.push(group);
-          next();
-        }, stake, group);
-      }).then(gotAllStakeCallings);
-    }, stake);
-  };
-  ldsDirP.cmps.getCurrentStakeCallings = function (fn) {
-    this.getStakeCallings(fn, this.homeStake);
   };
 
   // Household
@@ -240,7 +294,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
       }, household, opts);
     }
 
-    forEachAsync(_households, gotOneHousehold).then(function () {
+    Lateral.create(gotOneHousehold, nThreads).add(_households).when(function () {
       me._emit('households', _households);
       fn(households);
     });
@@ -335,6 +389,68 @@ module.exports.init = function (LdsDir, ldsDirP) {
     getWardRoster();
   };
 
+
+  // wardsOrIds can be an array or map of wards or ids
+  ldsDirP.cmps.getWards = function (fn, wardsOrIds, opts) {
+    var me = this
+      , wards = []
+      ;
+
+    function getOneWard(next, wardOrId) {
+      function addWard(ward) {
+        wards.push(ward);
+        next();
+      }
+      me.getWard(addWard, wardOrId, opts);
+    }
+
+    wardsOrIds = LdsDir.toArray(wardsOrIds);
+    Lateral.create(getOneWard, nThreads).add(wardsOrIds).when(function () {
+      fn(wards);
+    });
+  };
+
+  ldsDirP.cmps.getCurrentWard = function (fn, opts) {
+    var me = this
+      ;
+
+    me.getWard(fn, me.homeWardId, opts);
+  };
+
+
+  //
+  // Stake
+  //
+  ldsDirP.cmps.getStakeCallings = function (fn, stake) {
+    var me = this
+      ;
+
+    me._emit('stakeCallingsInit', stake);
+    me.getStakePositions(function (_positions) {
+      var positions = _positions.unitLeadership || _positions.stakeLeadership
+        , groups = []
+        ;
+
+      function gotAllStakeCallings() {
+        me._emit('stakeCallings', stake, groups);
+        fn(groups);
+      }
+
+      Lateral.create(function (next, group) {
+        me.getStakeLeadership(function (list) {
+          group.leaders = list.leaders;
+          group.unitName = list.unitName;
+          groups.push(group);
+          next();
+        }, stake, group);
+      }, nThreads).add(positions).when(gotAllStakeCallings);
+    }, stake);
+  };
+  ldsDirP.cmps.getCurrentStakeCallings = function (fn) {
+    this.getStakeCallings(fn, this.homeStake);
+  };
+
+
   ldsDirP.cmps.getStake = function (fn, stakeOrId, opts) {
     opts = opts || {};
     var me = this
@@ -365,7 +481,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
       if (false === opts.wards) {
         gotAllWards();
       } else {
-        me.getWards(gotAllWards, stake.wards, opts);
+        me.getWards(gotAllWards, [], opts);
       }
     }, stake);
   };
@@ -374,87 +490,5 @@ module.exports.init = function (LdsDir, ldsDirP) {
       ;
 
     me.getStake(fn, me.homeStakeId, opts);
-  };
-
-  // wardsOrIds can be an array or map of wards or ids
-  ldsDirP.cmps.getWards = function (fn, wardsOrIds, opts) {
-    var me = this
-      , wards = []
-      ;
-
-    function getOneWard(next, wardOrId) {
-      function addWard(ward) {
-        wards.push(ward);
-        next();
-      }
-      me.getWard(addWard, wardOrId, opts);
-    }
-
-    wardsOrIds = LdsDir.toArray(wardsOrIds);
-    forEachAsync(wardsOrIds, getOneWard).then(function () {
-      fn(wards);
-    });
-  };
-
-  // Current Stake
-  ldsDirP.cmps.getCurrentMeta = function (fn) {
-    var me = this
-      //, areaInfoId = 'area-info'
-      //, stakesInfoId = 'stakes-info'
-      ;
-
-    function onMetaResult(currentMeta, stakeList) {
-      me._emit('meta', currentMeta);
-
-      me.areas = {};
-      me.wards = {};
-      me.stakes = {};
-
-      me.homeArea = {};
-
-      me.homeAreaId = currentMeta.areaUnitNo;
-      me.homeStakeId = currentMeta.stakeUnitNo;
-      me.homeWardId = currentMeta.wardUnitNo;
-
-      me.homeArea.areaUnitNo = currentMeta.areaUnitNo;
-      me.homeArea.stakes = stakeList;
-      me.homeAreaStakes = {};
-      me.homeArea.stakes.forEach(function (stake) {
-        me.homeAreaStakes[stake.stakeUnitNo] = stake;
-        me.stakes[stake.stakeUnitNo] = stake;
-      });
-      // TODO me._emit('area', me.homeArea);
-
-      me.homeStake = me.stakes[me.homeStakeId];
-      me.homeStakeWards = {};
-      me.homeStake.wards.forEach(function (ward) {
-        me.homeStakeWards[ward.wardUnitNo] = ward;
-      });
-      Object.keys(me.stakes).forEach(function (stakeNo) {
-        var stake = me.stakes[stakeNo]
-          ;
-
-        stake.wards.forEach(function (ward) {
-          me.wards[ward.wardUnitNo] = ward;
-        });
-      });
-
-      me.homeWard = me.wards[me.homeWardId];
-
-      fn(currentMeta);
-    }
-
-    me._getJSON(LdsDir.getCurrentMetaUrl(), function (err, areaInfo) {
-      me._getJSON(LdsDir.getCurrentStakeUrl(), function (err2, stakes) {
-        onMetaResult(areaInfo, stakes);
-      });
-    });
-  };
-
-  ldsDirP.cmps.getCurrentWard = function (fn, opts) {
-    var me = this
-      ;
-
-    me.getWard(fn, me.homeWardId, opts);
   };
 };

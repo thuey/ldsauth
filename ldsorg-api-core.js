@@ -1,22 +1,46 @@
 module.exports.init = function (LdsDir, ldsDirP) {
   'use strict';
 
-  ldsDirP.apis = {};
+  //
+  // Session Cacheable
+  //
+  ldsDirP.sesh = ldsDirP.apis = {};
 
-  ldsDirP.apis.getCurrentUserId = function (fn) {
+  ldsDirP.sesh.getCurrentUserId = function (fn) {
     var me = this
       ;
 
-    me._getJSON(LdsDir.getCurrentUserIdUrl(), function (err, _id) {
-      me._emit('currentUserId', _id);
-      fn(_id);
+    me._getJSON(LdsDir.getCurrentUserIdUrl(), function (err, id) {
+      me._emit('currentUserId', id);
+      fn(id);
+    });
+  };
+  ldsDirP.sesh.getCurrentUnits = function (fn) {
+    var me = this
+      ;
+
+    me._getJSON(LdsDir.getCurrentMetaUrl(), function (err, units) {
+      me._emit('currentUnits', units);
+      fn(units);
+    });
+  };
+  ldsDirP.sesh.getCurrentStakes = function (fn) {
+    var me = this
+      ;
+
+    me._getJSON(LdsDir.getCurrentStakeUrl(), function (err, stakeList) {
+      me._emit('currentStakes', stakeList);
+      fn(stakeList);
     });
   };
 
-  // this is the only place to get email addresses for members without callings
-  ldsDirP.apis.getHousehold = function (fn, profileOrId, opts) {
-    opts = opts || {};
+  //
+  // Ward Cacheable
+  // (shared between users)
+  //
 
+  // this is the only place to get email addresses for members without callings
+  ldsDirP.apis.getHousehold = function (fn, profileOrId) {
     var me = this
       //, jointProfile
       , id
@@ -42,13 +66,46 @@ module.exports.init = function (LdsDir, ldsDirP) {
 
     me._getJSON(LdsDir.getHouseholdUrl(id), getFullHousehold/*, { noCache: true }*/);
   };
-  ldsDirP.apis.getWardOrganization = function (fn, ward, orgname, orgnameL) {
+
+  ldsDirP.apis.getHouseholdPhoto = function (fn, id) {
     var me = this
       ;
 
-    me._emit('wardOrganizationInit', ward, orgnameL);
+    me.getHousehold(function (profile) {
+      if (!profile.householdInfo.photoUrl) {
+        fn();
+        return;
+      }
+
+      me.getImageData(function (err, dataUrl) {
+        fn(dataUrl);
+      }, profile.householdInfo.photoUrl);
+    }, id);
+  };
+
+  ldsDirP.apis.getIndividualPhoto = function (fn, id) {
+    var me = this
+      ;
+
+    me.getHousehold(function (profile) {
+      if (!profile.headOfHousehold.photoUrl) {
+        fn();
+        return;
+      }
+
+      me.getImageData(function (err, dataUrl) {
+        fn(dataUrl);
+      }, profile.headOfHousehold.photoUrl);
+    }, id);
+  };
+
+  ldsDirP.apis.getWardOrganization = function (fn, ward, orgname) {
+    var me = this
+      ;
+
+    me._emit('wardOrganizationInit', ward, orgname.toLowerCase());
     me._getJSON(LdsDir.getWardOrganizationUrl(ward.wardUnitNo, orgname), function (err, orgs) {
-      me._emit('wardOrganization', ward, orgnameL, orgs);
+      me._emit('wardOrganization', ward, orgname.toLowerCase(), orgs);
       fn(orgs);
     });
   };
@@ -77,6 +134,10 @@ module.exports.init = function (LdsDir, ldsDirP) {
       }
     );
   };
+
+  //
+  // Stake Cacheable
+  //
 
   // STAKE CALLINGS
   ldsDirP.apis.getStakePositions = function (fn, stake) {

@@ -1,0 +1,5 @@
+100 - node ./ldsorg-test foo-user secret  1.64s user 0.17s system 8% cpu 20.310 total
+10 - node ./ldsorg-test foo-user secret  1.67s user 0.19s system 7% cpu 23.591 total
+4 - node ./ldsorg-test foo-user secret  3.65s user 0.44s system 16% cpu 24.680 total
+2 - node ./ldsorg-test foo-user secret  4.15s user 0.47s system 11% cpu 41.944 total
+1 - node ./ldsorg-test foo-user secret  3.89s user 0.44s system 5% cpu 1:24.73 total
