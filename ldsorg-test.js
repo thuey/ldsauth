@@ -22,7 +22,7 @@
     });
     */
     ldsorg.getCurrentWard(function (data) {
-      console.log('got current ward');
+      console.log('got current ward', ((Date.now() - ts) / 1000).toFixed(2) + 's');
       fs.writeFileSync('./test.json', JSON.stringify(data, null, '  '), 'utf8');
     });
   }

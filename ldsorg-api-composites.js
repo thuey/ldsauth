@@ -349,19 +349,31 @@ module.exports.init = function (LdsDir, ldsDirP) {
     }
 
     function getWardRoster() {
+      me._emit('wardRosterInit');
+      me._emit('wardMemberListInit');
+      me._emit('wardPhotoDirectoryInit');
+
       me._getJSON(LdsDir.getMemberListUrl(id), join.add());
       me._getJSON(LdsDir.getPhotosUrl(id), join.add());
 
       join.when(function (memberListArgs, photoListArgs) {
         var memberList = memberListArgs[1]
           , photoList = photoListArgs[1]
+          , roster = []
           ;
 
-        photoList.forEach(function (photo) {
-          memberList.forEach(function (member) {
-            if (photo.householdId !== member.headOfHouseIndividualId) {
+        me._emit('wardMemberList', memberList);
+        me._emit('wardPhotoDirectory', photoList);
+
+        photoList.forEach(function (_photo) {
+          memberList.forEach(function (_member) {
+            if (_photo.householdId !== _member.headOfHouseIndividualId) {
               return;
             }
+
+            var member = JSON.parse(JSON.stringify(_member))
+              , photo = JSON.parse(JSON.stringify(_photo))
+              ;
 
             // householdId
             // householdPhotoName
@@ -376,11 +388,15 @@ module.exports.init = function (LdsDir, ldsDirP) {
                 member[key] = photo[key];
               }
             });
+
+            roster.push(member);
           });
         });
 
-        ward.households = memberList;
+        ward.households = roster;
         ward.updatedAt = Date.now();
+
+        me._emit('wardRoster', roster);
 
         getWardRoles();
       });
