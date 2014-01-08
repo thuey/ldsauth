@@ -12,8 +12,12 @@ module.exports.init = function (LdsDir, ldsDirP) {
       ;
 
     me.getHousehold(function (profile) {
-      me.getFamilyPhoto(join.add(), profile, opts);
-      me.getIndividualPhoto(join.add(), profile, opts);
+      if (!opts.noFamilyPhoto) {
+        me.getFamilyPhoto(join.add(), profile, opts);
+      }
+      if (!opts.noIndividualPhoto) {
+        me.getIndividualPhoto(join.add(), profile, opts);
+      }
       join.then(function () {
         me._emit('householdEnd', profile);
         fn(profile);
@@ -222,7 +226,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
   };
 
   // Household
-  ldsDirP.cmps.getHouseholds = function (fn, _households) {
+  ldsDirP.cmps.getHouseholds = function (fn, _households, opts) {
     _households = LdsDir.mapIds(_households, 'householdId');
     var me = this
       , households = []
@@ -230,10 +234,10 @@ module.exports.init = function (LdsDir, ldsDirP) {
 
     me._emit('householdsInit', _households);
     function gotOneHousehold(next, household) {
-      me.getHousehold(function (_household) {
+      me.getHouseholdWithPhotos(function (_household) {
         households.push(_household);
         next();
-      }, household);
+      }, household, opts);
     }
 
     forEachAsync(_households, gotOneHousehold).then(function () {
@@ -285,7 +289,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
           if (false === opts.fullHouseholds) {
             onWardResult(ward);
           } else {
-            me.getHouseholds(gotAllHouseholds, ward.households);
+            me.getHouseholds(gotAllHouseholds, ward.households, opts);
           }
         }, ward);
       }, ward);
@@ -438,7 +442,6 @@ module.exports.init = function (LdsDir, ldsDirP) {
 
       me.homeWard = me.wards[me.homeWardId];
 
-      console.log('meta', currentMeta);
       fn(currentMeta);
     }
 

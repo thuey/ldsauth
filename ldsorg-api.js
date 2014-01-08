@@ -267,12 +267,6 @@
   mergeApi(ldsDirP.apis);
   mergeApi(ldsDirP.cmps);
 
-  ldsDirP.clear = function () {
-    var Pouch = require('Pouch');
-    console.info('clearing PouchDB cache');
-    Pouch.destroy('wardmenu-ludrs');
-  };
-
   LdsDir.create = function (opts) {
     opts = opts || {};
 

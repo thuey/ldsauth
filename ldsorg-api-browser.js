@@ -136,4 +136,10 @@
       hasPouch(Pouch);
     }, 'text');
   };
+
+  ldsDirP.clear = function () {
+    var Pouch = require('Pouch');
+    console.info('clearing PouchDB cache');
+    Pouch.destroy('wardmenu-ludrs');
+  };
 }());

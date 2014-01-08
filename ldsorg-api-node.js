@@ -73,4 +73,11 @@ module.exports.init = function (LdsDir, ldsDirP) {
 
     ready();
   };
+
+  ldsDirP.clear = function () {
+    var me = this
+      ;
+
+    me.___store = {};
+  };
 };

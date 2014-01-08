@@ -2,7 +2,7 @@
   'use strict';
 
   function log(event, a, b, c, d) {
-    console.log(event, a, b, c, d);
+    console.log('[LOG]', event, a, b, c, d);
   }
 
   function getErDone() {
@@ -18,6 +18,7 @@
   ldsorg = LdsOrg.create({ node: true });
   ldsorg.signin(
     function (err) {
+      console.log('sign-in complete');
       if (err) {
         console.log('failed', err);
         return;
