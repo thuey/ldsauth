@@ -64,7 +64,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
         saveHouseholdPhoto(err, data.result);
         return;
       }
-      LdsDir.getImageData(function (err, dataUrl) {
+      me.getImageData(function (err, dataUrl) {
         data._id = familyImageId;
         data.result = dataUrl || "";
         me.store.put(data);
@@ -112,7 +112,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
         saveIndividualPhoto(err, data.result);
         return;
       }
-      LdsDir.getImageData(function (err, dataUrl) {
+      me.getImageData(function (err, dataUrl) {
         data._id = individualImageId;
         data.result = dataUrl || "";
         me.store.put(data);

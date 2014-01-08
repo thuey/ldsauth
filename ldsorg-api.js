@@ -207,7 +207,7 @@
       if (!(stale || opts.noCache || opts.expire)) {
         cb(null, data.value);
       } else {
-        LdsDir.makeRequest(function (err, _data) {
+        me.makeRequest(function (err, _data) {
           if (_data) {
             var obj = { _id: storeUrl, updatedAt: Date.now(), value: _data };
             obj._rev = (_data || {})._rev;
@@ -244,23 +244,17 @@
   , "ADULTS" // the lone plural organization
   ];
 
-  ldsDirP.init = function (cb, eventer, opts) {
-    opts = opts || {};
-
-    if (opts.node) {
-      require('./ldsorg-api-node');
-    } else if (opts.phantom) {
-      require('./ldsorg-api-phantom');
-    } else {
-      require('./ldsorg-api-browser');
-    }
-
+  ldsDirP.init = function (cb, eventer) {
     var me = this
       ;
 
     me._emit = eventer || function () {};
 
     me._emit('cacheInit');
+    me.initCache(function () {
+      me._emit('cacheReady');
+      me.getCurrentMeta(cb);
+    });
   };
 
   require('./ldsorg-api-core').init(LdsDir, ldsDirP);
@@ -279,7 +273,17 @@
     Pouch.destroy('wardmenu-ludrs');
   };
 
-  LdsDir.create = function () {
+  LdsDir.create = function (opts) {
+    opts = opts || {};
+
+    if (opts.node) {
+      require('./ldsorg-api-node').init(LdsDir, ldsDirP);
+    } else if (opts.phantom) {
+      require('./ldsorg-api-phantom').init(LdsDir, ldsDirP);
+    } else {
+      require('./ldsorg-api-browser').init(LdsDir, ldsDirP);
+    }
+
     var ldsDir = Object.create(LdsDir.prototype)
       ;
 

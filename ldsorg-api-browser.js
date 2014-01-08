@@ -6,7 +6,7 @@
     , ldsDirP = LdsDir.prototype
     ;
 
-  LdsDir.signin = ldsDirP.signin = function (cb) {
+  ldsDirP.signin = ldsDirP.signin = function (cb) {
     // TODO use iframe
     var //me = this
         signinWin
@@ -67,7 +67,7 @@
     getLoginStatus();
   };
 
-  LdsDir.makeRequest = function (cb, url) {
+  ldsDirP.makeRequest = function (cb, url) {
     $.ajax({
       url: url
     , dataType: "json"
@@ -79,7 +79,7 @@
       ;
   };
 
-  LdsDir.getImageData = function (next, imgSrc) {
+  ldsDirP.getImageData = function (next, imgSrc) {
     if (!imgSrc) {
       next(new Error('no imgSrc'));
       return;
@@ -113,31 +113,13 @@
       ;
 
     function hasPouch(Pouch) {
-      /*
-      function n() {}
-      me.___store = {};
-      me.store = {
-        get: function (id, cb) { setTimeout(function () { cb(null, me.___store[id]); }); }
-      , put: function (data) { me.___store[data._id] = data; }
-      , destroy: n
-      };
-
-      setTimeout(function () {
-        me._emit('cacheReady');
-        me.getCurrentMeta(cb);
-      }, 100);
-      return;
-      */
-      ///*
       new Pouch('wardmenu-ludrs', function (err, db) {
         me.store = db;
         setTimeout(function () {
-          me._emit('cacheReady');
           console.log('pouch ready');
-          me.getCurrentMeta(cb);
+          cb();
         }, 100);
       });
-      //*/
     }
 
     try {
@@ -148,7 +130,7 @@
     }
 
     $.get('http://thewardmenu.com/pouchdb-nightly.js', function (jsText) {
-      // some crazy illegal token hack
+      // some crazy illegal token lint hack
       $(['<sc', 'ript>'].join('') + jsText + '</' + 'script' + '>').appendTo('body');
       var Pouch = require('Pouch');
       hasPouch(Pouch);
