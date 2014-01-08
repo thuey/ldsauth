@@ -39,6 +39,22 @@ module.exports.init = function (LdsDir, ldsDirP) {
   // (shared between users)
   //
 
+  ldsDirP.apis.getMemberList = function (fn, id) {
+    var me = this
+      ;
+
+    me._getJSON(LdsDir.getMemberListUrl(id), function (err, list) {
+      fn(list);
+    });
+  };
+  ldsDirP.apis.getPhotoList = function (fn, id) {
+    var me = this
+      ;
+
+    me._getJSON(LdsDir.getPhotosUrl(id), function (err, list) {
+      fn(list);
+    });
+  };
   // this is the only place to get email addresses for members without callings
   ldsDirP.apis.getHousehold = function (fn, profileOrId) {
     var me = this

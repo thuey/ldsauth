@@ -349,12 +349,21 @@ module.exports.init = function (LdsDir, ldsDirP) {
     }
 
     function getWardRoster() {
+      var join = Join.create()
+        , listJ = join.add()
+        , photoJ = join.add()
+        ;
+
       me._emit('wardRosterInit');
       me._emit('wardMemberListInit');
       me._emit('wardPhotoDirectoryInit');
 
-      me._getJSON(LdsDir.getMemberListUrl(id), join.add());
-      me._getJSON(LdsDir.getPhotosUrl(id), join.add());
+      me.getMemberList(function (list) {
+        listJ(null, list);
+      }, id);
+      me.getPhotoList(function (photos) {
+        photoJ(null, photos);
+      }, id);
 
       join.when(function (memberListArgs, photoListArgs) {
         var memberList = memberListArgs[1]
