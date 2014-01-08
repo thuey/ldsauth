@@ -2,7 +2,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
   'use strict';
 
   var Join =  require('join')
-    , forEachAsync =  require('forEachAsync')
+    , forEachAsync =  require('forEachAsync').forEachAsync
     ;
 
   ldsDirP.cmps = {};
@@ -18,7 +18,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
       if (!opts.noIndividualPhoto) {
         me.getIndividualPhoto(join.add(), profile, opts);
       }
-      join.then(function () {
+      join.when(function () {
         me._emit('householdEnd', profile);
         fn(profile);
       });
@@ -250,7 +250,6 @@ module.exports.init = function (LdsDir, ldsDirP) {
   // (but always include phone from photos)
   // TODO most of this logic should be moved to getHouseholds
   ldsDirP.cmps.getWard = function (fn, wardOrId, opts) {
-    console.log('get ward');
     opts = opts || {};
 
     var me = this
@@ -299,7 +298,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
       me._getJSON(LdsDir.getMemberListUrl(id), join.add());
       me._getJSON(LdsDir.getPhotosUrl(id), join.add());
 
-      join.then(function (memberListArgs, photoListArgs) {
+      join.when(function (memberListArgs, photoListArgs) {
         var memberList = memberListArgs[1]
           , photoList = photoListArgs[1]
           ;
@@ -453,7 +452,6 @@ module.exports.init = function (LdsDir, ldsDirP) {
   };
 
   ldsDirP.cmps.getCurrentWard = function (fn, opts) {
-    console.log('cur ward');
     var me = this
       ;
 

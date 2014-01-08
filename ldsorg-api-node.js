@@ -37,12 +37,23 @@ module.exports.init = function (LdsDir, ldsDirP) {
     request.get(url, {
       jar: me.__jar
     }, function (err, res, body) {
+      var data
+        ;
+
       if (err) {
         cb(err);
         return;
       }
 
-      cb(null, JSON.parse(body));
+      try {
+        data = JSON.parse(body);
+      } catch(e) {
+        console.error(e);
+        console.log(typeof body, JSON.stringify(body));
+        console.log(url);
+      }
+
+      cb(null, data);
     });
   };
 
@@ -55,8 +66,12 @@ module.exports.init = function (LdsDir, ldsDirP) {
       return;
     }
 
-    request.get(imgSrc, { jar: me.__jar }, function (err, res, body) {
-      next(err, body && body.toString('base64'));
+    console.log(imgSrc);
+    request.get('https://www.lds.org' + imgSrc, { jar: me.__jar, encoding: null }, function (err, res, body) {
+      console.log(typeof err);
+      console.log(typeof body);
+      console.log(Buffer.isBuffer(body));
+      next(err, body && ('data:image/jpeg;base64,' + body.toString('base64')) || "");
     });
   };
 

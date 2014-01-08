@@ -1,19 +1,29 @@
 (function () {
   'use strict';
 
+  var fs = require('fs')
+    , LdsOrg = require('./ldsorg-api')
+    , ldsorg
+    ;
+
   function log(event, a, b, c, d) {
-    console.log('[LOG]', event, a, b, c, d);
+    console.log('[LOG]', event);
   }
 
   function getErDone() {
+    ldsorg.getHouseholdWithPhotos(function (data) {
+      console.log(data);
+    }, '5754908622', {});
+    /*
     ldsorg.getCurrentUserId(function (id) {
       console.log('got user id', id);
     });
+    ldsorg.getCurrentWard(function (data) {
+      console.log('got current ward');
+      fs.writeFileSync('./test.json', JSON.stringify(data, null, '  '), 'utf8');
+    });
+    */
   }
-
-  var LdsOrg = require('./ldsorg-api')
-    , ldsorg
-    ;
 
   ldsorg = LdsOrg.create({ node: true });
   ldsorg.signin(

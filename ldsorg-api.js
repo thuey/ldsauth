@@ -43,7 +43,7 @@
         ;
 
       //obj[name] = element;
-      obj[name] = LdsDir.mapId(element, name);
+      obj[name] = LdsDir.mapId(element, name)[name];
       return obj;
     });
   };

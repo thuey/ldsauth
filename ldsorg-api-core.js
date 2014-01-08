@@ -7,7 +7,6 @@ module.exports.init = function (LdsDir, ldsDirP) {
     var me = this
       ;
 
-    console.log('getCurrentUserId');
     me._getJSON(LdsDir.getCurrentUserIdUrl(), function (err, _id) {
       me._emit('currentUserId', _id);
       fn(_id);
@@ -25,7 +24,7 @@ module.exports.init = function (LdsDir, ldsDirP) {
       ;
 
     //jointProfile = LdsDir.mapId(profileOrId, 'householdId');
-    id = profileOrId.householdId || profileOrId;
+    id = profileOrId.householdId || profileOrId.id || profileOrId;
     profileId = 'profile-' + id;
 
     //me._emit('householdInit', jointProfile);
