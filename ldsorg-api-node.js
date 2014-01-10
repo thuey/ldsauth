@@ -57,17 +57,17 @@ module.exports.init = function (LdsDir, ldsDirP) {
     });
   };
 
-  ldsDirP.getImageData = function (next, opts) {
+  ldsDirP.getImageData = function (next, imgSrc) {
     var me = this
       ;
 
-    if (!opts.url) {
+    if (!imgSrc) {
       next(new Error('no imgSrc'));
       return;
     }
 
     // encoding is utf8 by default
-    request.get('https://www.lds.org' + opts.url, { jar: me.__jar, encoding: null }, function (err, res, body) {
+    request.get('https://www.lds.org' + imgSrc, { jar: me.__jar, encoding: null }, function (err, res, body) {
       next(err, body && ('data:image/jpeg;base64,' + body.toString('base64')) || "");
     });
   };

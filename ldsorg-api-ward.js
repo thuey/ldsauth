@@ -120,7 +120,7 @@
         }
       , { url: LdsOrg.getWardLeadershipGroupUrl(me._wardUnitNo, group.groupKey, group.instance)
         , store: me._store
-        , cacheId: 'leadership-' + group
+        , cacheId: 'leadership-' + group.groupName
         , ldsOrg: me._ldsOrg, ldsStake: me._ldsStake, ldsWard: me }
       );
     };
@@ -384,7 +384,7 @@
           return;
         }
 
-        me._ldsOrg.getImageData(
+        LdsOrg._getImage(
           function (err, dataUrl) {
             fn(dataUrl);
           }
@@ -405,7 +405,7 @@
           return;
         }
 
-        me._ldsOrg.getImageData(
+        LdsOrg._getImage(
           function (err, dataUrl) {
             fn(dataUrl);
           }

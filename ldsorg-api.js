@@ -229,6 +229,35 @@
     // TODO assume base
     opts.store.get(respondWithCache, opts.cacheId);
   };
+  LdsOrg._getImage = function (cb, opts) {
+    function respondWithCache(err, data) {
+      var stale = true
+        ;
+
+      if (data) {
+        stale = (Date.now() - opts.updatedAt) < (opts.keepAlive || defaultKeepAlive);
+      }
+
+      if (!(stale || opts.noCache || opts.expire)) {
+        cb(null, data.value);
+      } else {
+        opts.ldsOrg.getImageData(function (err, _data) {
+          if (_data) {
+            var obj = { _id: opts.cacheId, updatedAt: Date.now(), value: _data };
+            obj._rev = (_data || {})._rev;
+            if (!opts.noCache) {
+              opts.store.put(function () {}, opts.cacheId, obj);
+            }
+          }
+          cb(err, _data);
+        }, opts.url);
+      }
+    }
+
+    // TODO cache here by url
+    // TODO assume base
+    opts.store.get(respondWithCache, opts.cacheId);
+  };
 
   LdsOrg.create = function (opts) {
     opts = opts || {};
