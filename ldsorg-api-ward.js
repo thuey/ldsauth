@@ -144,8 +144,10 @@
         if (!opts.noIndividualPhoto) {
           me.getIndividualPhoto(join.add(), id, opts);
         }
-        join.when(function () {
+        join.when(function (famArgs, indArgs) {
           me._emit('householdEnd', profile);
+          profile.headOfHousehold.imageData = famArgs[0];
+          profile.householdInfo.imageData = indArgs[0];
           fn(profile);
         });
       }, id);
