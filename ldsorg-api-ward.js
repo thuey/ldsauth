@@ -132,20 +132,23 @@
     ldsWardP.getHouseholdWithPhotos = function (fn, profileOrId, opts) {
       var join = Join.create()
         , me = this
+        , id
         ;
+
+      id = profileOrId.householdId || profileOrId.id || profileOrId;
 
       me.getHousehold(function (profile) {
         if (!opts.noFamilyPhoto) {
-          me.getFamilyPhoto(join.add(), profile, opts);
+          me.getHouseholdPhoto(join.add(), id, opts);
         }
         if (!opts.noIndividualPhoto) {
-          me.getIndividualPhoto(join.add(), profile, opts);
+          me.getIndividualPhoto(join.add(), id, opts);
         }
         join.when(function () {
           me._emit('householdEnd', profile);
           fn(profile);
         });
-      }, profileOrId);
+      }, id);
     };
     ldsWardP.getOrganizations = function (fn, orgnames) {
       var me = this
@@ -380,7 +383,7 @@
           return;
         }
 
-        me.getImageData(
+        me._ldsOrg.getImageData(
           function (err, dataUrl) {
             fn(dataUrl);
           }
@@ -401,7 +404,7 @@
           return;
         }
 
-        me.getImageData(
+        me._ldsOrg.getImageData(
           function (err, dataUrl) {
             fn(dataUrl);
           }
