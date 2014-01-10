@@ -87,7 +87,7 @@
   ];
 
   var defaultKeepAlive = 1 * 24 * 60 * 60 * 1000
-    , LdsStake = require('./ldsorg-api-stake').init(LdsOrg, require('./ldsorg-api-ward').init(LdsOrg))
+    , LdsStake = require('./stake').init(LdsOrg, require('./ward').init(LdsOrg))
     , ldsOrgP = LdsOrg.prototype
     , Join =  require('join')
     ;
@@ -263,11 +263,11 @@
     opts = opts || {};
 
     if (opts.node) {
-      require('./ldsorg-api-node').init(LdsOrg, ldsOrgP);
+      require('./node').init(LdsOrg, ldsOrgP);
     } else if (opts.phantom) {
-      require('./ldsorg-api-phantom').init(LdsOrg, ldsOrgP);
+      require('./phantom').init(LdsOrg, ldsOrgP);
     } else {
-      require('./ldsorg-api-browser').init(LdsOrg, ldsOrgP);
+      require('./browser').init(LdsOrg, ldsOrgP);
     }
 
     var ldsOrg = Object.create(LdsOrg.prototype)

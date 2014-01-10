@@ -2,7 +2,7 @@
   'use strict';
 
   var fs = require('fs')
-    , LdsOrg = require('./ldsorg-api')
+    , LdsOrg = require('./')
     , Cache = require('./cache').Cache
     , ldsorg
     , ts = Date.now()
