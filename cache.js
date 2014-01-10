@@ -10,6 +10,7 @@ function Cache(opts) {
     ;
 
   me._opts = opts;
+  me._opts.cacheDir = me._opts.cacheDir || __dirname
 
   if (me._opts.ldsOrg) {
     return {
@@ -49,6 +50,8 @@ Cache.prototype.init = function (ready) {
       fs.writeFileSync(filepath, JSON.stringify(me._data, null, '  '), 'utf8');
     }
 
+    console.log('stakeCache', me._data, typeof me._data, JSON.stringify(me._data));
+
     ready();
   }
 
@@ -69,6 +72,8 @@ Cache.prototype.init = function (ready) {
       me._save();
     }
 
+    console.log('wardCache', me._data, typeof me._data, JSON.stringify(me._data));
+
     ready();
   }
 
@@ -88,7 +93,7 @@ Cache.prototype.get = function (fn, cacheId) {
     ;
 
   setTimeout(function () {
-    fn(null, me.data[cacheId]);
+    fn(null, me._data[cacheId]);
   }, 0);
 };
 

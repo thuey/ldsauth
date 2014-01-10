@@ -14,8 +14,12 @@
       me._stakeOpts = opts;
       me._stakeUnitNo = opts.stakeUnitNo;
       me._meta = ldsOrg.stakes[opts.stakeUnitNo];
+      me._emit = ldsOrg._emit;
 
-      me._store = new me._ldsOrg._Cache(opts, ldsOrg, me);
+      me._store = new me._ldsOrg._Cache({
+        ldsOrg: ldsOrg
+      , ldsStake: me
+      });
     }
     LdsStake.create = LdsStake;
 
@@ -79,7 +83,10 @@
         ;
 
       me._realWards = me._realWards || {};
-      me._realWards[wardUnitNo] = me._realWards[wardUnitNo] || LdsWard.create({ wardUnitNo: wardUnitNo }, me._ldsOrg, me);
+      if (!me._realWards[wardUnitNo]) {
+        me._realWards[wardUnitNo] = LdsWard.create({ wardUnitNo: wardUnitNo }, me._ldsOrg, me);
+        me._realWards[wardUnitNo].init(function () {});
+      }
 
       return me._realWards[wardUnitNo];
     };
@@ -102,11 +109,11 @@
         fn(wards);
       });
     };
-    ldsStakeP.getCurrentWard = function (fn, opts) {
+    ldsStakeP.getCurrentWard = function () {
       var me = this
         ;
 
-      me.getWard(fn, me.homeWardId, opts);
+      return me.getWard(me._ldsOrg.homeWardId);
     };
 
 

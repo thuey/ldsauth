@@ -250,7 +250,7 @@
   };
 
   // Organizations
-  ldsOrgP._organizations = [
+  LdsOrg._organizations = [
     "HIGH_PRIEST"
   , "ELDER"
   , "RELIEF_SOCIETY"
@@ -270,7 +270,9 @@
     me._emit = eventer || function () {};
 
     me._emit('cacheInit');
-    me.initCache(function () {
+
+    me._store = new me._Cache({ ldsOrg: me });
+    me._store.init(function () {
       me._emit('cacheReady');
       me.getUserMeta(cb);
     });
@@ -356,6 +358,7 @@
       userJ(null, userId);
     });
     me.getCurrentUnits(function (units) {
+      console.log(units);
       me._areaMeta = units;
       me.homeAreaId = units.areaUnitNo;
       me.homeStakeId = units.stakeUnitNo;
@@ -412,9 +415,12 @@
       ;
 
     me._realStakes = me._realStakes || {};
-    me._realStakes[stakeUnitNo] = me._realStakes[stakeUnitNo] || LdsStake.create({ stakeUnitNo: stakeUnitNo }, me);
+    if (!me._realStakes[stakeUnitNo]) {
+      me._realStakes[stakeUnitNo] = LdsStake.create({ stakeUnitNo: stakeUnitNo }, me);
+      me._realStakes[stakeUnitNo].init(function () {});
+    }
 
-    return me._realWards[stakeUnitNo];
+    return me._realStakes[stakeUnitNo];
   };
   ldsOrgP.getCurrentStake = function () {
     var me = this

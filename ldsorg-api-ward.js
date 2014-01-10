@@ -8,7 +8,7 @@
         ;
 
       if (!(this instanceof LdsWard)) {
-        return new LdsWard(opts);
+        return new LdsWard(opts, ldsOrg, ldsStake);
       }
 
       me._ldsOrg = ldsOrg;
@@ -16,8 +16,13 @@
       me._wardUnitNo = opts.wardUnitNo;
       me._wardOpts = opts;
       me._meta = ldsOrg.wards[opts.wardUnitNo];
+      me._emit = ldsOrg._emit;
 
-      me._store = new me._ldsOrg._Cache(opts, ldsOrg, ldsStake, me);
+      me._store = new me._ldsOrg._Cache({
+        ldsOrg: ldsOrg
+      , ldsStake: ldsStake
+      , ldsWard: me
+      });
     }
     LdsWard.create = LdsWard;
 
@@ -72,10 +77,11 @@
     };
     ldsWardP.getOrganization = function (fn, orgname) {
       var me = this
-        , orgnameL = orgname.toLoweCase()
+        , orgnameL = orgname.toLowerCase()
         ;
 
       me._emit('wardOrganizationInit', me._wardUnitNo, orgname.toLowerCase());
+      console.log(LdsOrg.getWardOrganizationUrl(me._wardUnitNo, orgname));
       LdsOrg._getJSON(
         function (err, orgs) {
           me._emit('wardOrganization', me._wardUnitNo, orgnameL, orgs);
@@ -148,7 +154,7 @@
         ;
 
       if (!Array.isArray(orgnames)) {
-        orgnames = me._organizations.slice(0);
+        orgnames = LdsOrg._organizations.slice(0);
       }
 
       me._emit('wardOrganizationsInit', id, orgnames);

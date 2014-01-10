@@ -72,14 +72,6 @@ module.exports.init = function (LdsDir, ldsDirP) {
     });
   };
 
-  ldsDirP.initCache = function (ready) {
-    var me = this
-      ;
-
-    me._store = new me._Cache({ ldsOrg: me });
-    me._store.init(ready);
-  };
-
   ldsDirP.clear = function () {
     var me = this
       ;
