@@ -10,9 +10,9 @@ function Cache(opts) {
     ;
 
   me._opts = opts;
-  me._opts.cacheDir = me._opts.cacheDir || __dirname
+  me._opts.cacheDir = me._opts.cacheDir || __dirname;
 
-  if (me._opts.ldsOrg) {
+  if (me._opts.ldsOrg && !me._opts.ldsStake && !me._opts.ldsWard) {
     return {
       get: function (cb, id) { setTimeout(function () { cb(null, store[id]); }); }
     , put: function (cb, data) { store[data._id] = data; if (cb) { cb(null); } }
@@ -23,43 +23,15 @@ function Cache(opts) {
   }
 }
 
-Cache.prototype._save = function () {
-  var me = this
-    ;
-
-  fs.writeFileSync(me._filepath, JSON.stringify(me._data, null, '  '), 'utf8');
-};
-
 Cache.prototype.init = function (ready) {
   var me = this
     ;
 
   function getStakeCache(stake) {
     var dirpath = path.join(me._opts.cacheDir, 'stakes')
-      , filepath = path.join(dirpath, 'stakes', stake._stakeUnitNo + '.json')
       ;
 
-    if (!fs.existsSync(dirpath)) {
-      fs.mkdirSync(dirpath);
-    }
-
-    try {
-      me._data = require(filepath);
-    } catch(e) {
-      me._data = {};
-      fs.writeFileSync(filepath, JSON.stringify(me._data, null, '  '), 'utf8');
-    }
-
-    console.log('stakeCache', me._data, typeof me._data, JSON.stringify(me._data));
-
-    ready();
-  }
-
-  function getWardCache(ward) {
-    var dirpath = path.join(me._opts.cacheDir, 'wards')
-      ;
-
-    me._filepath = path.join(dirpath, 'wards', ward._wardUnitNo + '.json');
+    me._filepath = path.join(dirpath, stake._stakeUnitNo + '.json');
 
     if (!fs.existsSync(dirpath)) {
       fs.mkdirSync(dirpath);
@@ -72,20 +44,45 @@ Cache.prototype.init = function (ready) {
       me._save();
     }
 
-    console.log('wardCache', me._data, typeof me._data, JSON.stringify(me._data));
+    ready();
+  }
+
+  function getWardCache(ward) {
+    var dirpath = path.join(me._opts.cacheDir, 'wards')
+      ;
+
+    me._filepath = path.join(dirpath, ward._wardUnitNo + '.json');
+
+    if (!fs.existsSync(dirpath)) {
+      fs.mkdirSync(dirpath);
+    }
+
+    try {
+      me._data = require(me._filepath);
+    } catch(e) {
+      me._data = {};
+      me._save();
+    }
 
     ready();
   }
 
   if (me._opts.ldsWard) {
-    getWardCache();
+    getWardCache(me._opts.ldsWard);
     return;
   }
 
   if (me._opts.ldsStake) {
-    getStakeCache();
+    getStakeCache(me._opts.ldsStake);
     return;
   }
+};
+
+Cache.prototype._save = function () {
+  var me = this
+    ;
+
+  fs.writeFileSync(me._filepath, JSON.stringify(me._data, null, '  '), 'utf8');
 };
 
 Cache.prototype.get = function (fn, cacheId) {

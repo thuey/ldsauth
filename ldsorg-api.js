@@ -217,7 +217,7 @@
             var obj = { _id: opts.cacheId, updatedAt: Date.now(), value: _data };
             obj._rev = (_data || {})._rev;
             if (!opts.noCache) {
-              opts.store.put(null, opts.cacheId, obj);
+              opts.store.put(function () {}, opts.cacheId, obj);
             }
           }
           cb(err, _data);
@@ -358,7 +358,6 @@
       userJ(null, userId);
     });
     me.getCurrentUnits(function (units) {
-      console.log(units);
       me._areaMeta = units;
       me.homeAreaId = units.areaUnitNo;
       me.homeStakeId = units.stakeUnitNo;

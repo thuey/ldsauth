@@ -81,7 +81,6 @@
         ;
 
       me._emit('wardOrganizationInit', me._wardUnitNo, orgname.toLowerCase());
-      console.log(LdsOrg.getWardOrganizationUrl(me._wardUnitNo, orgname));
       LdsOrg._getJSON(
         function (err, orgs) {
           me._emit('wardOrganization', me._wardUnitNo, orgnameL, orgs);
