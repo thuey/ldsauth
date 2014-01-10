@@ -3,6 +3,7 @@
 
   var fs = require('fs')
     , LdsOrg = require('./ldsorg-api')
+    , Cache = require('./cache').Cache
     , ldsorg
     , ts = Date.now()
     ;
@@ -21,13 +22,13 @@
       console.log('got user id', id);
     });
     */
-    ldsorg.getCurrentWard(function (data) {
+    ldsorg.getCurrentStake().getCurrentWard().getAll(function (data) {
       console.log('got current ward', ((Date.now() - ts) / 1000).toFixed(2) + 's');
       fs.writeFileSync('./test.json', JSON.stringify(data, null, '  '), 'utf8');
     });
   }
 
-  ldsorg = LdsOrg.create({ node: true });
+  ldsorg = LdsOrg.create({ node: true, Cache: Cache });
   ldsorg.signin(
     function (err) {
       console.log('sign-in complete');

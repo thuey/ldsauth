@@ -57,17 +57,17 @@ module.exports.init = function (LdsDir, ldsDirP) {
     });
   };
 
-  ldsDirP.getImageData = function (next, imgSrc) {
+  ldsDirP.getImageData = function (next, opts) {
     var me = this
       ;
 
-    if (!imgSrc) {
+    if (!opts.url) {
       next(new Error('no imgSrc'));
       return;
     }
 
     // encoding is utf8 by default
-    request.get('https://www.lds.org' + imgSrc, { jar: me.__jar, encoding: null }, function (err, res, body) {
+    request.get('https://www.lds.org' + opts.url, { jar: me.__jar, encoding: null }, function (err, res, body) {
       next(err, body && ('data:image/jpeg;base64,' + body.toString('base64')) || "");
     });
   };
@@ -76,14 +76,8 @@ module.exports.init = function (LdsDir, ldsDirP) {
     var me = this
       ;
 
-    me.___store = {};
-    me.store = {
-      get: function (id, cb) { setTimeout(function () { cb(null, me.___store[id]); }); }
-    , put: function (data, cb) { me.___store[data._id] = data; if (cb) { cb(); } }
-    , destroy: function (id, cb) { delete me.___store[id]; if (cb) { cb(); } }
-    };
-
-    ready();
+    me._store = new me._Cache({ ldsOrg: me });
+    me._store.init(ready);
   };
 
   ldsDirP.clear = function () {
