@@ -57,15 +57,15 @@
       var me = this
         ;
 
-      me._emit('stakeLeadershipInit', me._stakeUnitNo, group);
+      me._emit('stakeLeadershipInit', me._stakeUnitNo, group.groupName, group);
       LdsOrg._getJSON(
         function (err, leadershipWrapped) {
-          me._emit('stakeLeadership', me._stakeUnitNo, group, leadershipWrapped);
+          me._emit('stakeLeadership', me._stakeUnitNo, group.groupName, leadershipWrapped);
           fn(leadershipWrapped);
         }
       , { url: LdsOrg.getStakeLeadershipGroupUrl(me._stakeUnitNo, group.groupKey, group.instance)
         , store: me._store
-        , cacheId: 'leadership-' + group
+        , cacheId: 'leadership-' + group.groupName
         , ldsOrg: me._ldsOrg, ldsStake: me }
       );
     };

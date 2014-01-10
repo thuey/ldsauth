@@ -22,9 +22,11 @@
       console.log('got user id', id);
     });
     */
-    ldsorg.getCurrentStake().getCurrentWard().getAll(function (data) {
+    ldsorg.getCurrentStake().getAll(function () {
+      console.log('got current stake', ((Date.now() - ts) / 1000).toFixed(2) + 's');
+    });
+    ldsorg.getCurrentStake().getCurrentWard().getAll(function () {
       console.log('got current ward', ((Date.now() - ts) / 1000).toFixed(2) + 's');
-      fs.writeFileSync('./test.json', JSON.stringify(data, null, '  '), 'utf8');
     });
   }
 

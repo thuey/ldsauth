@@ -112,10 +112,10 @@
       var me = this
         ;
 
-      me._emit('wardLeadershipInit', me._wardUnitNo, group);
+      me._emit('wardLeadershipInit', me._wardUnitNo, group.groupName);
       LdsOrg._getJSON(
         function (err, leadershipWrapped) {
-          me._emit('wardLeadership', me._wardUnitNo, group, leadershipWrapped);
+          me._emit('wardLeadership', me._wardUnitNo, group.groupName, leadershipWrapped);
           fn(leadershipWrapped);
         }
       , { url: LdsOrg.getWardLeadershipGroupUrl(me._wardUnitNo, group.groupKey, group.instance)
