@@ -31,7 +31,7 @@
       , Join =  require('join')
       //, forEachAsync = require('forEachAsync').forEachAsync
       , Lateral = require('./lateral').Lateral
-      , nThreads = 6
+      , nThreads = 10
       ;
 
     ldsWardP.init = function (cb) {
@@ -180,7 +180,7 @@
           orgs[orgnameL] = members;
           next();
         }, orgname);
-      }, nThreads).add(orgnames).when(gotAllOrgs);
+      }, nThreads).add(orgnames).then(gotAllOrgs);
     };
     ldsWardP.getCallings = function (fn) {
       var me = this
@@ -204,7 +204,7 @@
             groups.push(group);
             next();
           }, group);
-        }, nThreads).add(positions).when(gotAllCallings);
+        }, nThreads).add(positions).then(gotAllCallings);
       });
     };
     ldsWardP.getHouseholds = function (fn, _households, opts) {
@@ -221,7 +221,7 @@
         }, household, opts);
       }
 
-      Lateral.create(gotOneHousehold, nThreads).add(_households).when(function () {
+      Lateral.create(gotOneHousehold, nThreads).add(_households).then(function () {
         me._emit('households', _households);
         fn(households);
       });

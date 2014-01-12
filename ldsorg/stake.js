@@ -26,7 +26,7 @@
     var ldsStakeP = LdsStake.prototype
       //, forEachAsync = require('forEachAsync').forEachAsync
       , Lateral = require('./lateral').Lateral
-      , nThreads = 6
+      , nThreads = 10
       ;
 
     LdsStake.prototype.init = function (cb) {
@@ -105,7 +105,7 @@
       }
 
       wardsOrIds = LdsOrg.toArray(wardsOrIds);
-      Lateral.create(getOneWard, nThreads).add(wardsOrIds).when(function () {
+      Lateral.create(getOneWard, nThreads).add(wardsOrIds).then(function () {
         fn(wards);
       });
     };
@@ -145,7 +145,7 @@
             groups.push(group);
             next();
           }, group);
-        }, nThreads).add(positions).when(gotAllCallings);
+        }, nThreads).add(positions).then(gotAllCallings);
       });
     };
 

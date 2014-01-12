@@ -1,72 +1,78 @@
-(function () {
-  "use strict";
-
-  // TODO factor out parallel code into module
-  var Sequence = require('sequence')
-    , Join = require('join')
-    ;
+/*jshint -W054 */
+;(function (exports) {
+  'use strict';
 
   // should be more like sequence than join
-  function Parallel(_fn, _nThreads) {
-    if (!(this instanceof Parallel)) {
-      return new Parallel(_fn, _nThreads);
-    }
-    var nThreads = _nThreads || 4
-      , fn = _fn
-      , mod = 0
-      , sequences = []
-      , parallel
+  function Lateral(fn, nThreads) {
+    var me = this
       ;
 
-    parallel = {
-        setThreads: function (_nThreads) {
-          var i
-            ;
+    if (!(me instanceof Lateral)) {
+      return new Lateral(fn, nThreads);
+    }
 
-          nThreads = _nThreads;
-          
-          sequences = [];
-          for (i = 0; i < nThreads; i += 1) {
-            sequences.push(Sequence.create());
-          }
+    // how many threads are allowed
+    me._nThreads = nThreads || 4;
+    // how many threads are underway
+    me._begun = 0;
+    // how many have been run
+    me._finished = 0;
+    // the function to run
+    me._fn = fn;
+    // the array of items
+    me._arr = [];
+    me._cbs = [];
 
-          return parallel;
-        }
-      , add: function (arr) {
-          var join
-            ;
-
-          // TODO instantiate the functions lazily
-          // rather than all-at-once and conserve memory
-          arr.forEach(function (item, i) {
-            mod = (mod % sequences.length);
-            sequences[mod].then(function (next) {
-              fn(next, item, i);
-            });
-            mod += 1;
-          });
-
-          join = Join.create();
-
-          sequences.forEach(function (seq) {
-            var j = join.add();
-            seq.then(function (next) {
-              j();
-              next();
-            });
-          });
-
-          return join;
-        }
+    me._onFinishedBound = function () {
+      me._finished += 1;
+      me._onNextBound();
+    };
+    me._onNextBound = function () {
+      if (!me._arr.length && me._finished > 0 && me._finished === me._begun) {
+        me._complete();
+      }
+      while (me._arr.length && (me._begun - me._finished) < me._nThreads) {
+        me._begun += 1;
+        me._fn(me._onFinishedBound, me._arr.shift(), me._begun - 1, me._arr);
+      }
     };
 
-    parallel.setThreads(nThreads);
-    
-    return parallel;
+    me.setThreads(me._nThreads);
   }
+  Lateral.create = Lateral;
 
-  Parallel.create = Parallel;
-  Parallel.Lateral = Parallel;
+  Lateral.prototype.setThreads = function (nThreads) {
+    var me = this
+      ;
 
-  module.exports.Lateral = Parallel;
-}());
+    me._nThreads = nThreads;
+    me._onNextBound();
+
+    return this;
+  };
+  Lateral.prototype.add = function (arr) {
+    var me = this
+      ;
+
+    me._arr = me._arr.concat(arr);
+    me._onNextBound();
+
+    return this;
+  };
+  Lateral.prototype.then = function (cb) {
+    var me = this
+      ;
+
+    me._cbs.push(cb);
+  };
+  Lateral.prototype._complete = function () {
+    var me = this
+      ;
+
+    me._cbs.forEach(function (cb) {
+      cb();
+    });
+  };
+
+  exports.Lateral = Lateral;
+}('undefined' !== typeof exports && exports || new Function('return this')()));
