@@ -460,5 +460,9 @@
     return me.getStake(me.homeStakeId);
   };
 
-  module.exports = exports = exports.LdsOrg = LdsOrg.LdsOrg = LdsOrg;
+  exports.LdsOrg = LdsOrg.LdsOrg = LdsOrg;
+
+  if ('undefined' !== typeof module) {
+    module.exports = exports.LdsOrg;
+  }
 }('undefined' !== typeof exports && exports || new Function('return this')()));

@@ -1,16 +1,23 @@
-(function () {
+/*jshint -W054 */
+;(function (exports) {
   'use strict';
 
-  var fs = require('fs')
-    , LdsOrg = require('./ldsorg').LdsOrg
-    , Cache = require('./cache').LdsOrgCache
+  var LdsOrg = exports.LdsOrg || require('./ldsorg').LdsOrg
+    , Cache = exports.LdsOrgCache || require('./cache').LdsOrgCache
     , ldsorg
     , ts = Date.now()
-    , username = process.argv[2]
-    , password = process.argv[3]
+    , username
+    , password
+    , isNode
     ;
 
-  function log(event, a, b, c, d) {
+  if ('undefined' !== typeof process && process.argv) {
+    username = process.argv[2];
+    password = process.argv[3];
+    isNode = true;
+  }
+
+  function log(event/*, a, b, c, d*/) {
     console.log('[LOG]', event);
   }
 
@@ -32,7 +39,7 @@
     });
   }
 
-  ldsorg = LdsOrg.create({ node: true, Cache: Cache });
+  ldsorg = LdsOrg.create({ node: isNode, Cache: Cache });
   ldsorg.signin(
     function (err) {
       console.log('sign-in complete');
@@ -41,8 +48,10 @@
         return;
       }
 
-      ldsorg.init(getErDone, log, { node: true });
+      ldsorg.init(getErDone, log, { node: isNode });
     }
   , { username: username, password: password }
   );
-}());
+
+  //exports.LdsOrgTest = LdsOrgTest.LdsOrgTest = LdsOrgTest;
+}('undefined' !== typeof exports && exports || new Function('return this')()));

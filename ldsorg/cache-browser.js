@@ -12,7 +12,6 @@
       ;
 
     me._opts = opts;
-    me._opts.cacheDir = me._opts.cacheDir || __dirname;
 
     if (me._opts.ldsOrg && !me._opts.ldsStake && !me._opts.ldsWard) {
       return {
@@ -112,5 +111,9 @@
     fn(null);
   };
 
-  module.exports = exports = exports.LdsOrgCache = LdsOrgCache.LdsOrgCache = LdsOrgCache;
+  exports.LdsOrgCache = LdsOrgCache.LdsOrgCache = LdsOrgCache;
+
+  if ('undefined' !== typeof module) {
+    module.exports = exports.LdsOrgCache;
+  }
 }('undefined' !== typeof exports && exports || new Function('return this')()));
