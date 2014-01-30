@@ -2,9 +2,8 @@
 ;(function (exports) {
   'use strict';
 
-  var fs = require('fs')
-    , path = require('path')
-    , cachep
+  var cachep
+    , caches = { stakes: {}, wards: {} }
     ;
 
   function LdsOrgCache(opts) {
@@ -32,41 +31,17 @@
       ;
 
     function getStakeCache(stake) {
-      var dirpath = path.join(me._opts.cacheDir, 'stakes')
-        ;
+      me._data = caches.stakes[stake._stakeUnitNo] || {};
 
-      me._filepath = path.join(dirpath, stake._stakeUnitNo + '.json');
-
-      if (!fs.existsSync(dirpath)) {
-        fs.mkdirSync(dirpath);
-      }
-
-      try {
-        me._data = require(me._filepath);
-      } catch(e) {
-        me._data = {};
-        me._save();
-      }
+      me._data = {};
+      me._save();
 
       ready();
     }
 
     function getWardCache(ward) {
-      var dirpath = path.join(me._opts.cacheDir, 'wards')
-        ;
-
-      me._filepath = path.join(dirpath, ward._wardUnitNo + '.json');
-
-      if (!fs.existsSync(dirpath)) {
-        fs.mkdirSync(dirpath);
-      }
-
-      try {
-        me._data = require(me._filepath);
-      } catch(e) {
-        me._data = {};
-        me._save();
-      }
+      me._data = caches.wards[ward._wardUnitNo] || {};
+      me._save();
 
       ready();
     }
@@ -83,10 +58,7 @@
   };
 
   cachep._save = function () {
-    var me = this
-      ;
-
-    fs.writeFileSync(me._filepath, JSON.stringify(me._data, null, '  '), 'utf8');
+    // do nothing
   };
 
   cachep.get = function (fn, cacheId) {
