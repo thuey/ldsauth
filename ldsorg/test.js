@@ -3,7 +3,7 @@
 
   var fs = require('fs')
     , LdsOrg = require('./ldsorg').LdsOrg
-    , Cache = require('./cache').Cache
+    , Cache = require('./cache').LdsOrgCache
     , ldsorg
     , ts = Date.now()
     , username = process.argv[2]
