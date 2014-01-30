@@ -1,7 +1,8 @@
-(function () {
+/*jshint -W054 */
+;(function (exports) {
   'use strict';
 
-  module.exports.init = function (LdsOrg, LdsWard) {
+  var LdsOrgStake = { init: function (LdsOrg, LdsWard) {
     function LdsStake(opts, ldsOrg) {
       var me = this
         ;
@@ -24,8 +25,7 @@
     LdsStake.create = LdsStake;
 
     var ldsStakeP = LdsStake.prototype
-      //, forEachAsync = require('forEachAsync').forEachAsync
-      , Lateral = require('./lateral').Lateral
+      , Lateral = exports.Lateral || require('lateral').Lateral
       , nThreads = 10
       ;
 
@@ -150,6 +150,7 @@
     };
 
     return LdsStake;
-  };
+  }};
 
-}());
+  exports.LdsOrgStake = LdsOrgStake.LdsOrgStake = LdsOrgStake;
+}('undefined' !== typeof exports && exports || new Function('return this')()));

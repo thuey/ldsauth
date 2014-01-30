@@ -1,7 +1,8 @@
-(function () {
+/*jshint -W054 */
+;(function (exports) {
   'use strict';
 
-  module.exports.init = function (LdsOrg) {
+  exports.LdsOrgWard = { init: function (LdsOrg) {
 
     function LdsWard(opts, ldsOrg, ldsStake) {
       var me = this
@@ -28,9 +29,8 @@
 
 
     var ldsWardP = LdsWard.prototype
-      , Join =  require('join')
-      //, forEachAsync = require('forEachAsync').forEachAsync
-      , Lateral = require('./lateral').Lateral
+      , Join =  exports.Join || require('join').Join
+      , Lateral = exports.Lateral || require('lateral').Lateral
       , nThreads = 10
       ;
 
@@ -143,7 +143,7 @@
         if (!opts.noIndividualPhoto) {
           me.getIndividualPhoto(join.add(), id, opts);
         }
-        join.when(function (famArgs, indArgs) {
+        join.then(function (famArgs, indArgs) {
           me._emit('householdEnd', profile);
           profile.headOfHousehold.imageData = famArgs[0];
           profile.householdInfo.imageData = indArgs[0];
@@ -266,7 +266,7 @@
           photoJ(null, photos);
         }, id);
 
-        join.when(function (memberListArgs, photoListArgs, orgsArgs, callsArgs) {
+        join.then(function (memberListArgs, photoListArgs, orgsArgs, callsArgs) {
           var memberList = memberListArgs[1]
             , photoList = photoListArgs[1]
             , organizations = orgsArgs[1]
@@ -418,5 +418,5 @@
     };
 
     return LdsWard; 
-  };
-}());
+  }};
+}('undefined' !== typeof exports && exports || new Function('return this')()));

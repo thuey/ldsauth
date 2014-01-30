@@ -2,10 +2,12 @@
   'use strict';
 
   var fs = require('fs')
-    , LdsOrg = require('./')
+    , LdsOrg = require('./ldsorg').LdsOrg
     , Cache = require('./cache').Cache
     , ldsorg
     , ts = Date.now()
+    , username = process.argv[2]
+    , password = process.argv[3]
     ;
 
   function log(event, a, b, c, d) {
@@ -41,6 +43,6 @@
 
       ldsorg.init(getErDone, log, { node: true });
     }
-  , { username: process.argv[2], password: process.argv[3] }
+  , { username: username, password: password }
   );
 }());

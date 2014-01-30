@@ -1,5 +1,6 @@
-(function () {
-  "use strict";
+/*jshint -W054 */
+;(function (exports) {
+  'use strict';
 
   function LdsOrg() {
   }
@@ -87,9 +88,11 @@
   ];
 
   var defaultKeepAlive = 1 * 24 * 60 * 60 * 1000
-    , LdsStake = require('./stake').init(LdsOrg, require('./ward').init(LdsOrg))
+    , LdsOrgWard = (exports.LdsOrgWard || require('./ward').LdsOrgWard)
+    , LdsOrgStake = (exports.LdsOrgStake || require('./stake').LdsOrgStake)
+    , LdsStake = LdsOrgStake.init(LdsOrg, LdsOrgWard.init(LdsOrg))
     , ldsOrgP = LdsOrg.prototype
-    , Join =  require('join')
+    , Join =  exports.Join || require('join').Join
     ;
 
   LdsOrg._urls = {};
@@ -263,11 +266,11 @@
     opts = opts || {};
 
     if (opts.node) {
-      require('./node').init(LdsOrg, ldsOrgP);
+      require('./node').LdsOrgNode.init(LdsOrg, ldsOrgP);
     } else if (opts.phantom) {
       require('./phantom').init(LdsOrg, ldsOrgP);
     } else {
-      require('./browser').init(LdsOrg, ldsOrgP);
+      (exports.LdsOrgBrowser || require('./browser').LdsOrgBrowser).init(LdsOrg, ldsOrgP);
     }
 
     var ldsOrg = Object.create(LdsOrg.prototype)
@@ -416,7 +419,7 @@
       stakeJ(null, stakes);
     });
 
-    join.when(function (userArgs, unitArgs, stakeArgs) {
+    join.then(function (userArgs, unitArgs, stakeArgs) {
       var meta
         ;
 
@@ -457,5 +460,5 @@
     return me.getStake(me.homeStakeId);
   };
 
-  module.exports = LdsOrg;
-}());
+  module.exports = exports = exports.LdsOrg = LdsOrg.LdsOrg = LdsOrg;
+}('undefined' !== typeof exports && exports || new Function('return this')()));
