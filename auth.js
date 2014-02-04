@@ -8,8 +8,9 @@ var passport = require('passport')
   , BasicStrategy = require('passport-http').BasicStrategy
   , ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy
   , BearerStrategy = require('passport-http-bearer').Strategy
+  , Cache = require('ldsorg/cache').LdsOrgCache
   , db = require('./db')
-  , ldsPhantom = require('./ldsorg-phantom')
+  , LdsOrg = require('ldsorg').LdsOrg
   ;
 
 module.exports.init = function () {
@@ -23,36 +24,32 @@ module.exports.init = function () {
    */
   passport.use(new LocalStrategy(
     function (username, password, done) {
-      var session = {}
+      var ldsorg = LdsOrg.create({ node: true, Cache: Cache })
         ;
 
-      console.log('try local login', username, !!password && 'password:true');
-      ldsPhantom.callApi(
-        function (err, sesh, id) {
+      ldsorg.signin(
+        function (err) {
+          console.log('sign-in complete');
           if (err) {
             done(err);
             return;
           }
 
-          session.username = sesh.username;
-          session.password = sesh.password;
-          session.phantom = sesh.phantom;
-          session.page = sesh.page;
-          session.emitter = sesh.emitter;
-
-          if (!id) {
-            done(new Error("couldn't retrieve id"));
-            return;
-          }
-
-          session.id = id;
-          done(null, session);
+          ldsorg.init(function (data) {
+            var serializableUser
+              ;
+ 
+            console.log('ldsorg.init data', data);
+            serializableUser = {
+              username: username
+            , password: password
+            , ldsorg: ldsorg
+            , id: data.currentUserId
+            };
+            done(null, serializableUser);
+          }, null, { node: true });
         }
-      , { username: username
-        , password: password
-        , method: 'getCurrentUserId'
-        , args: []
-        }
+      , { username: username, password: password }
       );
     }
   ));

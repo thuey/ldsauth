@@ -14,7 +14,7 @@
     //, site = require('./site')
     , path = require('path')
     , port = process.argv[2] || 3000
-    , ldsPhantom = require('./ldsorg-phantom')
+    , LdsOrg = require('ldsorg').LdsOrg
     , EventEmitter = require('events').EventEmitter
     ;
 
@@ -45,15 +45,9 @@
         rest.post('/dialog/authorize/decision', ware);
       }
     });
-
     oauth2.token.forEach(function (ware) {
       rest.post('/oauth/token', ware);
     });
-
-    rest.post(
-      '/api/login'
-    , passport.authenticate('local', { successReturnToOrRedirect: '/account.html', failureRedirect: '/login.html' })
-    );
 
     user.info.forEach(function (ware) {
       rest.get('/api/userinfo', ware);
@@ -63,69 +57,50 @@
       rest.get('/api/clientinfo', ware);
     });
 
-    // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
-    // /ldsorg/stakeId/wardId/profiles?ids=1234,7654&pictures=true&household=true
-
     /*
+     * lds.org api wrapping
+     */
+    rest.post(
+      '/api/login'
+    , passport.authenticate('local', { successReturnToOrRedirect: '/account.html', failureRedirect: '/login.html' })
+    );
+    rest.get(
+      '/api/ldsorg/me'
+    , function (req, res) {
+        // TODO serialize & reconstruct
+        var ldsorg = req.session.ldsorg
+          ;
 
-    module.exports.callApi = function (done, opts) {
-    //module.exports.callApi = function (username, password, apiFn, apiArgs, done) {
-      var username = opts.username
-        , password = opts.pssword
-        , ph = opts.phantom
-        , page = opts.page
-        , apiFn = opts.method
-        , apiArgs = opts.args
-        , emitter = opts.emitter
-        ;
+        if (ldsorg.me) {
+        }
 
-    */
-    function apiWrap(user, method, args, done) {
-      console.log('phantom.callApi(...)');
-      user.emitter.
-      ldsPhantom.callApi(
-        function (err, sesh) {
-          done(err, data);
-        }
-      , { username: user.username
-        , password: user.password
-        , method: method
-        , args: args
-        }
-      );
-    }
+        res.end("/me not implemented");
+      }
+    );
+    rest.get(
+      '/api/ldsorg/me/ward'
+    , function (req, res) {
+        var ldsorg = req.session.ldsorg
+          ;
 
-    // GET /directory/services/ludrs/mem/wardDirectory/photos/:ward_unit_no
-    // GET /directory/services/ludrs/mem/householdProfile/:head_of_house_individual_id
-    // GET /photo/url/:id_1,:id_2,:id_x/individual
-    rest.get('/api/ldsorg/photos', function (req, res) {
-      // req.query.ids
-      apiWrap(
-        req.user, [], 'getPhotos', [{ ids: req.query.ids, family: true, individual: true }]
-      , function (err, photos) {
-          res.send(photos.value);
+        if (ldsorg.homeward) {
         }
-      );
 
-      res.send();
-    });
-    rest.get('/api/ldsorg/homeward', function (req, res) {
-      console.log('/api/ldsorg/homeward');
-      apiWrap(
-        req.user, [], 'getCurrentWard', [{ fullHouseholds: !!req.query.fullHouseholds }]
-      , function (err, currentWard) {
-          res.send(currentWard.value);
+        res.end("/me/ward not implemented");
+      }
+    );
+    rest.get(
+      '/api/ldsorg/me/stake'
+    , function (req, res) {
+        var ldsorg = req.session.ldsorg
+          ;
+
+        if (ldsorg.stake) {
         }
-      );
-    });
-/*
-    rest.get('/api/ldsorg/homestake', function (req, res) {
-    });
-    rest.get('/api/ldsorg/:stakeId', function (req, res) {
-    });
-    rest.get('/api/ldsorg/:stakeId/:wardId', function (req, res) {
-    });
-*/
+
+        res.end("/me/stake not implemented");
+      }
+    );
   }
     
   // Connect configuration

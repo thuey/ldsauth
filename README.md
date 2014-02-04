@@ -25,11 +25,12 @@ This is just a braindump, the api does not exist yet.
 * `/wards/#{wardUnitNo}/organizations` - includes all organizations and which members belong to which
 * `/wards/#{wardUnitNo}/households` - includes all households (ostensibly all members in a YSA ward)
 * `/wards/#{wardUnitNo}/xattrs` - stuff that ldsauth adds (facebook and twitter links)
-* `/wards/#{stakeUnitNo}` - includes all of the above
+* `/wards/#{wardUnitNo}` - includes all of the above
 
 * `/households/#{headOfHouseholdId}` - base64 data-urls for family & head of house photos, also email, phone, etc
 * `/households/#{headOfHouseholdId}/family.jpg`
 * `/households/#{headOfHouseholdId}/head.jpg`
+* `/households/#{headOfHouseholdId}/xattrs` - stuff that ldsauth adds (facebook and twitter links)
 * `/wards/#{wardUnitNo}/individuals` - includes all of the above for the entire ward (takes about 20s, maybe up to a minute)
 * `/wards/#{wardUnitNo}/individuals?ids=x,y,z` - fetches just these members
 
