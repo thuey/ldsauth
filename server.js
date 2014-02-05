@@ -13,7 +13,7 @@
     , client = require('./api/client')
     //, site = require('./site')
     , path = require('path')
-    , port = process.argv[2] || 3000
+    , port = process.argv[2] || 3001
     ;
 
   if (!connect.router) {
@@ -60,6 +60,7 @@
      */
     rest.post(
       '/api/login'
+    /*
     , function (req, res, next) {
         passport.authenticate('local', function (err, user) {
           if (!user) {
@@ -74,7 +75,9 @@
           });
         })(req, res, next);
       }
-    //, passport.authenticate('local', { successReturnToOrRedirect: '/account', failureRedirect: '/login.html' })
+    */
+      // TODO provide a different login endpoint for oauth vs same origin
+    , passport.authenticate('local', { successReturnToOrRedirect: '/api/ldsorg/me', failureRedirect: '/login.html' })
     );
     rest.get(
       '/api/ldsorg/me'
