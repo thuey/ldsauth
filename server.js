@@ -14,8 +14,6 @@
     //, site = require('./site')
     , path = require('path')
     , port = process.argv[2] || 3000
-    , LdsOrg = require('ldsorg').LdsOrg
-    , EventEmitter = require('events').EventEmitter
     ;
 
   if (!connect.router) {
@@ -62,37 +60,64 @@
      */
     rest.post(
       '/api/login'
-    , passport.authenticate('local', { successReturnToOrRedirect: '/account.html', failureRedirect: '/login.html' })
+    , function (req, res, next) {
+        passport.authenticate('local', function (err, user) {
+          if (!user) {
+            res.redirect('/login.html');
+          }
+
+          req.login(user, function (err) {
+            if (err) {
+              console.error(err);
+            }
+            res.render('account', { json: JSON.stringify(user.meta) });
+          });
+        })(req, res, next);
+      }
+    //, passport.authenticate('local', { successReturnToOrRedirect: '/account', failureRedirect: '/login.html' })
     );
     rest.get(
       '/api/ldsorg/me'
     , function (req, res) {
         // TODO serialize & reconstruct
-        var ldsorg = req.session.ldsorg
+        var ldsorg = req.user.ldsorg
           ;
 
-        if (ldsorg.me) {
-        }
+        ldsorg.getCurrentUserMeta(function (profile) {
+          res.send(profile);
+          //res.json("/me not implemented");
+        });
+      }
+    );
+    rest.get(
+      '/api/ldsorg/me/household'
+    , function (req, res) {
+        // TODO serialize & reconstruct
+        var ldsorg = req.user.ldsorg
+          ;
 
-        res.end("/me not implemented");
+        ldsorg.getCurrentHousehold(function (profile) {
+          res.send(profile);
+          //res.json("/me not implemented");
+        });
       }
     );
     rest.get(
       '/api/ldsorg/me/ward'
     , function (req, res) {
-        var ldsorg = req.session.ldsorg
+        var ldsorg = req.user.ldsorg
           ;
 
-        if (ldsorg.homeward) {
-        }
-
-        res.end("/me/ward not implemented");
+        ldsorg.getCurrentStake().getCurrentWard().getAll(function (profile) {
+          res.send(profile);
+          //res.json("/me/ward not implemented");
+        });
       }
     );
     rest.get(
       '/api/ldsorg/me/stake'
     , function (req, res) {
-        var ldsorg = req.session.ldsorg
+        var ldsorg = req.user.ldsorg
           ;
 
         if (ldsorg.stake) {
@@ -107,14 +132,16 @@
   app
     .use(connect.logger())
     .use(connect.query())
-    .use(connect.cookieParser())
     .use(connect.json())
+    .use(connect.compress())
+    .use(connect.cookieParser())
     .use(connect.urlencoded())
     .use(connect.session({ secret: 'keyboard cat' }))
     .use(require('connect-jade')({ root: __dirname + "/views", debug: true }))
     .use(function (req, res, next) {
       if (!res.send) {
         res.send = function (obj) {
+          res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(obj, null, '  '));
         };
       }

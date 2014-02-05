@@ -43,6 +43,7 @@ module.exports.init = function () {
             serializableUser = {
               username: username
             , password: password
+            , meta: data
             , ldsorg: ldsorg
             , id: data.currentUserId
             };
@@ -59,6 +60,7 @@ module.exports.init = function () {
   });
 
   passport.deserializeUser(function (id, done) {
+    console.log('deserialize id', id);
     db.users.find(id, done);
   });
 
