@@ -1,6 +1,6 @@
 {
   "name": "ldsauth",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "PhantomJS proxy for LDS.org authentication and data access",
   "main": "index.js",
   "dependencies": {
@@ -20,7 +20,7 @@
     "request": "~2.30.0",
     "join": "~2.3.1",
     "sequence": "~2.2.1",
-    "ldsorg": "~2.0.0"
+    "ldsorg": "~2.1.2"
   },
   "devDependencies": {},
   "scripts": {

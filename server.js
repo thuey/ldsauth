@@ -110,7 +110,6 @@
 
         ldsorg.getCurrentStake().getCurrentWard().getAll(function (profile) {
           res.send(profile);
-          //res.json("/me/ward not implemented");
         });
       }
     );
@@ -120,10 +119,112 @@
         var ldsorg = req.user.ldsorg
           ;
 
-        if (ldsorg.stake) {
-        }
+        ldsorg.getCurrentStake().getAll(function (profile) {
+          res.send(profile);
+        });
+      }
+    );
 
-        res.end("/me/stake not implemented");
+    // NOTE / TODO / XXX / BUG
+    // Right now it seems to make the most sense to me to require
+    // the full drill down of stake/ward/household because I have
+    // this nagging feeling that the extra context will
+    // come in handy down the road
+    rest.get(
+      '/api/ldsorg/stakes/:stakeUnitNo/wards/:wardUnitNo/households/:householdId'
+    , function (req, res) {
+        var ldsorg = req.user.ldsorg
+          ;
+
+        ldsorg
+          .getStake(req.params.stakeUnitNo)
+          .getWard(req.params.wardUnitNo)
+          .getHouseholdWithPhotos(function (profile) {
+            res.send(profile);
+          }, req.params.householdId);
+      }
+    );
+    rest.get(
+      '/api/ldsorg/stakes/:stakeUnitNo/wards/:wardUnitNo/photo-list'
+    , function (req, res) {
+        var ldsorg = req.user.ldsorg
+          ;
+
+        ldsorg
+          .getStake(req.params.stakeUnitNo)
+          .getWard(req.params.wardUnitNo)
+          .getPhotoList(function (profile) {
+            res.send(profile);
+          });
+      }
+    );
+    rest.get(
+      '/api/ldsorg/stakes/:stakeUnitNo/wards/:wardUnitNo/member-list'
+    , function (req, res) {
+        var ldsorg = req.user.ldsorg
+          ;
+
+        ldsorg
+          .getStake(req.params.stakeUnitNo)
+          .getWard(req.params.wardUnitNo)
+          .getMemberList(function (profile) {
+            res.send(profile);
+          });
+      }
+    );
+    rest.get(
+      '/api/ldsorg/stakes/:stakeUnitNo/wards/:wardUnitNo/roster'
+    , function (req, res) {
+        var ldsorg = req.user.ldsorg
+          ;
+
+        ldsorg
+          .getStake(req.params.stakeUnitNo)
+          .getWard(req.params.wardUnitNo)
+          .getRoster(function (profile) {
+            res.send(profile);
+          });
+      }
+    );
+    rest.get(
+      '/api/ldsorg/stakes/:stakeUnitNo/wards/:wardUnitNo/info'
+    , function (req, res) {
+        var ldsorg = req.user.ldsorg
+          ;
+
+        ldsorg
+          .getStake(req.params.stakeUnitNo)
+          .getWard(req.params.wardUnitNo)
+          .getAll(function (profile) {
+            res.send(profile);
+          }, { fullHouseholds: false });
+      }
+    );
+    rest.get(
+      '/api/ldsorg/stakes/:stakeUnitNo/wards/:wardUnitNo'
+    , function (req, res) {
+        var ldsorg = req.user.ldsorg
+          ;
+
+        ldsorg
+          .getStake(req.params.stakeUnitNo)
+          .getWard(req.params.wardUnitNo)
+          .getAll(function (profile) {
+            res.send(profile);
+          });
+      }
+    );
+    rest.get(
+      '/api/ldsorg/stakes/:stakeUnitNo'
+    , function (req, res) {
+        var ldsorg = req.user.ldsorg
+          ;
+
+        ldsorg
+          .getStake(req.params.stakeUnitNo)
+          .getAll(function (profile) {
+            res.send(profile);
+          });
       }
     );
   }

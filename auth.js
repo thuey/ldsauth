@@ -4,6 +4,7 @@
  * Module dependencies.
  */
 var passport = require('passport')
+  , path = require('path')
   , LocalStrategy = require('passport-local').Strategy
   , BasicStrategy = require('passport-http').BasicStrategy
   , ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy
@@ -24,7 +25,7 @@ module.exports.init = function () {
    */
   passport.use(new LocalStrategy(
     function (username, password, done) {
-      var ldsorg = LdsOrg.create({ node: true, Cache: Cache })
+      var ldsorg = LdsOrg.create({ node: true, Cache: Cache, cacheOpts: { cacheDir: path.join(__dirname, 'data') } })
         ;
 
       ldsorg.signin(
@@ -48,7 +49,7 @@ module.exports.init = function () {
             , id: data.currentUserId
             };
             done(null, serializableUser);
-          }, null, { node: true });
+          }, null);
         }
       , { username: username, password: password }
       );
