@@ -1,0 +1,27 @@
+html
+  head
+    title LDSAuth - Connect to LDS.org
+  body
+    h1 LDSAuth
+
+    p.
+      LDSAuth makes it possible to authenticate through lds.org and use its API with OAuth2, very much like Facebook Connect.
+
+    p 
+      span The API documented at 
+      a(href="https://github.com/LDSOrg/ldsauth") https://github.com/LDSOrg/ldsauth
+
+    p You can use any OAuth2 library to connect to LDSAuth using the following endpoints
+
+    ul
+      li
+        span Authorization URL:  
+        a(href="http://ldsauth.org/dialog/authorize") http://ldsauth.org/dialog/authorize
+      li
+        span Token URL:  
+        a(href="http://ldsauth.org/oauth/token") http://ldsauth.org/oauth/token
+      li
+        span Profile URL:  
+        a(href="http://ldsauth.org/api/ldsorg/me") http://ldsauth.org/api/ldsorg/me
+
+    p There's not currently an automated registration system. To get a client id and secret, send an email to coolaj86@gmail.com.

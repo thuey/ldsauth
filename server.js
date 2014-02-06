@@ -6,14 +6,12 @@
    */
   var connect = require('connect')
     , app = connect()
-    , server
     , passport = require('passport')
     , oauth2 = require('./oauth2')
     , user = require('./api/user')
     , client = require('./api/client')
     //, site = require('./site')
     , path = require('path')
-    , port = process.argv[2] || 3001
     ;
 
   if (!connect.router) {
@@ -291,9 +289,18 @@
 
   module.exports = app;
 
-  if (require.main === module) {
+  function run() {
+    var port = process.argv[2] || 3001
+      , server
+      ;
+
+    //port = server.address().port;
     server = app.listen(port, function () {
       console.log('Listening on', server.address());
     });
+  }
+
+  if (require.main === module) {
+    run();
   }
 }());
