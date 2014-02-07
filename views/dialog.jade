@@ -7,7 +7,7 @@ p
 p Do you approve?
 
 form(action="/dialog/authorize/decision", method="post")
-  input(name="transaction_id", type="hidden", value="#{transactionID}")
+  input(name="transaction_id", type="hidden", value="#{transactionId}")
   div
     input#allow(type="submit", value="Allow")
     input#deny(type="submit", value="Deny", name="cancel")

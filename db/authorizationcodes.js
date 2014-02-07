@@ -1,13 +1,25 @@
 'use strict';
 
-var codes = {};
+var fs = require('fs')
+  , path = require('path')
+  , dbpath = path.join(__dirname, 'authorizationcodesdb.json')
+  , codes
+  ;
+
+try {
+  codes = require(dbpath);
+} catch(e) {
+  codes = {};
+}
 
 exports.find = function(key, done) {
   var code = codes[key];
-  return done(null, code);
+  done(null, code);
 };
 
-exports.save = function(code, clientID, redirectURI, userID, scope, done) {
-  codes[code] = { clientID: clientID, redirectURI: redirectURI, userID: userID };
-  return done(null);
+exports.save = function(code, values, done) {
+  codes[code] = values;
+  fs.writeFile(dbpath, JSON.stringify(codes, null, '  '), 'utf8', function () {
+    done(null);
+  });
 };

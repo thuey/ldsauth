@@ -1,22 +1,25 @@
+'use strict';
+
 var clients = require('./clientsdb');
 
-
 exports.find = function(id, done) {
-  for (var i = 0, len = clients.length; i < len; i++) {
-    var client = clients[i];
+  if (!clients.some(function (client) {
     if (client.id === id) {
-      return done(null, client);
+      done(null, client);
+      return true;
     }
+  })) {
+    done(null, null);
   }
-  return done(null, null);
 };
 
 exports.findByClientId = function(clientId, done) {
-  for (var i = 0, len = clients.length; i < len; i++) {
-    var client = clients[i];
+  if (!clients.some(function (client) {
     if (client.clientId === clientId) {
-      return done(null, client);
+      done(null, client);
+      return true;
     }
+  })) {
+    done(null, null);
   }
-  return done(null, null);
 };

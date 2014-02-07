@@ -26,14 +26,21 @@ var server = oauth2orize.createServer();
 // simple matter of serializing the client's ID, and deserializing by finding
 // the client by ID from the database.
 
-server.serializeClient(function (client, done) {
-  return done(null, client.id);
+server.serializeClient(function (consumer, done) {
+  console.log('[serializeClient]');
+  /*
+  db.clients.create(consumer, function (err, id) {
+    done(null, id);
+  });
+  */
+  done(null, consumer.id);
 });
 
-server.deserializeClient(function (id, done) {
-  db.clients.find(id, function (err, client) {
+server.deserializeClient(function (consumerId, done) {
+  console.log('[deserializeClient]');
+  db.clients.find(consumerId, function (err, consumer) {
     if (err) { return done(err); }
-    return done(null, client);
+    done(null, consumer);
   });
 });
 
@@ -51,12 +58,21 @@ server.deserializeClient(function (id, done) {
 // the application.  The application issues a code, which is bound to these
 // values, and will be exchanged for an access token.
 
-server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, done) {
-  var code = utils.uid(16)
+server.grant(oauth2orize.grant.code(function (consumer, redirectURI, user, ares, done) {
+  console.log('[grant code]');
+  var code = consumer.id + ':' + utils.uid(16)
+    , values = {
+        userId: user.id
+      , scope: ares.scope
+      , consumerId: consumer.id
+      , clientId: consumer.clientId
+      , redirectURI: redirectURI
+      }
     ;
-  
-  console.log('grant1 ares', ares);
-  db.authorizationCodes.save(code, client.id, redirectURI, user.id, ares.scope, function (err) {
+
+  console.log('grant1 values', values);
+  db.authorizationCodes.save(code, values, function (err) {
+
     if (err) { return done(err); }
     done(null, code);
   });
@@ -68,11 +84,19 @@ server.grant(oauth2orize.grant.code(function (client, redirectURI, user, ares, d
 // the application.  The application issues a token, which is bound to these
 // values.
 
-server.grant(oauth2orize.grant.token(function (client, user, ares, done) {
-  var token = utils.uid(256);
+server.grant(oauth2orize.grant.token(function (consumer, user, ares, done) {
+  console.log('[grant token]');
+  var token = utils.uid(256)
+    , values = {
+        userId: user.id
+      , scope: ares.scope
+      , consumerId: consumer.id
+      , clientId: consumer.clientId
+      }
+    ;
 
-  console.log('grant2 ares', ares);
-  db.accessTokens.save(token, user.id, client.clientId, ares.scope, function (err) {
+  console.log('grant2 token', values);
+  db.accessTokens.save(token, values, function (err) {
     if (err) { return done(err); }
     done(null, token);
   });
@@ -84,16 +108,23 @@ server.grant(oauth2orize.grant.token(function (client, user, ares, done) {
 // application issues an access token on behalf of the user who authorized the
 // code.
 
-server.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, done) {
+server.exchange(oauth2orize.exchange.code(function (consumer, code, redirectURI, done) {
+  console.log('[exchange code]');
   db.authorizationCodes.find(code, function (err, authCode) {
     if (err) { return done(err); }
-    if (client.id !== authCode.clientID) { return done(null, false); }
-    if (redirectURI !== authCode.redirectURI) { return done(null, false); }
+    if (consumer.clientId !== authCode.clientId) { return done(null, false); }
+    //if (redirectURI !== authCode.redirectURI) { return done(null, false); }
     
     var token = utils.uid(256)
+      , values = {
+          userId: authCode.userId
+        , scope: authCode.scope
+        , consumerId: consumer.id
+        , clientId: consumer.clientId
+        }
       ;
 
-    db.accessTokens.save(token, authCode.userID, authCode.clientID, null, function (err) {
+    db.accessTokens.save(token, values, function (err) {
       if (err) { return done(err); }
       done(null, token);
     });
@@ -104,16 +135,16 @@ server.exchange(oauth2orize.exchange.code(function (client, code, redirectURI, d
 // `client`, which is exchanging the user's name and password from the
 // authorization request for verification. If these values are validated, the
 // application issues an access token on behalf of the user who authorized the code.
-
-server.exchange(oauth2orize.exchange.password(function (client, username, password, scope, done) {
+/*
+server.exchange(oauth2orize.exchange.password(function (consumer, username, password, scope, done) {
 
     //Validate the client
-    db.clients.findByClientId(client.clientId, function (err, localClient) {
+    db.clients.findByClientId(consumer.clientId, function (err, localClient) {
         if (err) { return done(err); }
         if (localClient === null) {
           return done(null, false);
         }
-        if (localClient.clientSecret !== client.clientSecret) {
+        if (localClient.clientSecret !== consumer.clientSecret) {
           return done(null, false);
         }
         //Validate the user
@@ -126,40 +157,60 @@ server.exchange(oauth2orize.exchange.password(function (client, username, passwo
             return done(null, false);
           }
           //Everything validated, return the token
-          var token = utils.uid(256);
-          db.accessTokens.save(token, user.id, client.clientId, scope, function (err) {
+          var token = utils.uid(256)
+            , values = {
+                userId: user.id
+              , scope: scope
+              , consumerId: consumer.id
+              , clientId: consumer.clientId
+              }
+            ;
+
+          db.accessTokens.save(token, values, function (err) {
             if (err) { return done(err); }
             done(null, token);
           });
         });
     });
 }));
+*/
 
 // Exchange the client id and password/secret for an access token.  The callback accepts the
 // `client`, which is exchanging the client's id and password/secret from the
 // authorization request for verification. If these values are validated, the
 // application issues an access token on behalf of the client who authorized the code.
-
+/*
 server.exchange(oauth2orize.exchange.clientCredentials(function (client, scope, done) {
 
     //Validate the client
     db.clients.findByClientId(client.clientId, function (err, localClient) {
       if (err) { return done(err); }
       if(localClient === null) {
-        return done(null, false);
+        done(null, false);
+        return;
       }
       if(localClient.clientSecret !== client.clientSecret) {
-        return done(null, false);
+        done(null, false);
+        return;
       }
-      var token = utils.uid(256);
 
-      //Pass in a null for user id since there is no user with this grant type
-      db.accessTokens.save(token, null, client.clientId, scope, function(err) {
+      var token = utils.uid(256)
+        , values = {
+            //Pass in a null for user id since there is no user with this grant type
+            userId: null
+          , scope: scope
+          , clientId: client.clientId
+          , consumerId: localClient.id
+          }
+        ;
+
+      db.accessTokens.save(token, values, function (err) {
         if (err) { return done(err); }
         done(null, token);
       });
     });
 }));
+*/
 
 // user authorization endpoint
 //
@@ -178,27 +229,28 @@ server.exchange(oauth2orize.exchange.clientCredentials(function (client, scope, 
 // first, and rendering the `dialog` view. 
 
 exports.authorization = [
-  login.ensureLoggedIn('/login.html'),
-  server.authorization(function(clientID, redirectURI, done) {
-    console.log('hello authorization');
-    db.clients.findByClientId(clientID, function(err, client) {
+  login.ensureLoggedIn('/login.html')
+, server.authorization(function (clientId, redirectURI, done) {
+    console.log('[authorize]', clientId);
+    db.clients.findByClientId(clientId, function (err, consumer) {
+      console.log(err);
       if (err) { return done(err); }
       // WARNING: For security purposes, it is highly advisable to check that
       //          redirectURI provided by the client matches one registered with
       //          the server.  For simplicity, this example does not.  You have
       //          been warned.
-      return done(null, client, redirectURI);
+      return done(null, consumer, redirectURI);
     });
-  }),
-  function(req, res){
-    console.log('going in for the big render!');
+  })
+, function (req, res) {
+    console.log('[render dialog]');
     res.render('dialog', {
-      transactionID: req.oauth2.transactionID
+      transactionId: req.oauth2.transactionID
     , user: req.user
+    , scope: req.oauth2.scope || ["default access"]
     , client: req.oauth2.client
     , url: req.url
     , body: req.body
-    , scope: req.oauth2.scope
     });
   }
 ];
@@ -211,8 +263,8 @@ exports.authorization = [
 // a response.
 
 exports.decision = [
-  login.ensureLoggedIn(),
-  server.decision()
+  login.ensureLoggedIn()
+, server.decision()
 ];
 
 
@@ -224,7 +276,7 @@ exports.decision = [
 // authenticate when making requests to this endpoint.
 
 exports.token = [
-  passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
-  server.token(),
-  server.errorHandler()
+  passport.authenticate(['basic', 'oauth2-client-password'], { session: false })
+, server.token()
+, server.errorHandler()
 ];
