@@ -2,61 +2,122 @@ README
 ===
 
 This is a login proxy to LDS.org so that you can
-easily create apps that rely on LDS.org login and data.
-
-Still in the early stages.
-
-The basic proxy work is complete.
-The caching is being worked on today.
-The API should be complete tomorrow.
+easily create apps that rely on LDS.org login and data by connecting via OAuth2.
 
 API
 ===
 
-This is just a braindump, the api does not exist yet.
-
-* `/stakes/#{stakeUnitNo}/meta` - includes the wards
-* `/stakes/#{stakeUnitNo}/callings` - includes positions
-* `/stakes/#{stakeUnitNo}` - includes all of the above
-* `/stakes/#{stakeUnitNo}/xattrs` - stuff that ldsauth adds (facebook and twitter links)
-
-* `/wards/#{wardUnitNo}/meta` - not sure...
-* `/wards/#{wardUnitNo}/callings` - includes email addresses for all members with callings
-* `/wards/#{wardUnitNo}/organizations` - includes all organizations and which members belong to which
-* `/wards/#{wardUnitNo}/households` - includes all households (ostensibly all members in a YSA ward)
-* `/wards/#{wardUnitNo}/xattrs` - stuff that ldsauth adds (facebook and twitter links)
-* `/wards/#{wardUnitNo}` - includes all of the above
-
-* `/households/#{headOfHouseholdId}` - base64 data-urls for family & head of house photos, also email, phone, etc
-* `/households/#{headOfHouseholdId}/family.jpg`
-* `/households/#{headOfHouseholdId}/head.jpg`
-* `/households/#{headOfHouseholdId}/xattrs` - stuff that ldsauth adds (facebook and twitter links)
-* `/wards/#{wardUnitNo}/individuals` - includes all of the above for the entire ward (takes about 20s, maybe up to a minute)
-* `/wards/#{wardUnitNo}/individuals?ids=x,y,z` - fetches just these members
-
-* GET `/me` - shortcut to /households/#{headOfHouseholdId}
-* PATCH `/me` - emails Ward Clerk and Bishop the desired changes
-
-A single call to get info for on individual may take a while as we have to
-retrieve stake and ward data before any individual to determine if they have a calling.
-
-Subsequent calls to any other person will be much faster.
-
-At the moment the user logs in the current ward directory will begin to download
-and the other directories will download in series.
-
-Due to the caching strategy employed, making individual requests (to get photo and email information)
-should still complete quickly.
-
-Whatever ward data exists (less than 30 days old) will be used first.
-If the data is more than 24 hours old it will be refreshed and the
-client may request to know when it has been updated.
-
-LDS.org Proxy Authentication
+OAuth2 Endpoint URLs
 ---
 
-* `/oauth/dialog` - point your oauth app here to authorize it
-* `/login` - post username and password to get a session
+* Authorization Endpoint URL: <http://ldsauth.org/dialog/authorize>
+* Token Endpoint URL: <http://ldsauth.org/oauth/authorize>
+* Profile Endpoint URL: <http://ldsauth.org/api/ldsorg/me>
+
+Profile
+---
+
+* <http://ldsauth.org/api/ldsorg/me> - metadata about your login
+* <http://ldsauth.org/api/ldsorg/me/household> - your profile, contact information, and household
+* <http://ldsauth.org/api/ldsorg/me/ward> - full list of callings, organizations, roster, pictures, etc
+* <http://ldsauth.org/api/ldsorg/me/stake> - full list of stake-level callings, but no ward-level data (i.e. no pictures / profiles)
+
+Stake Level
+---
+
+* <http://ldsauth.org/api/ldsorg/stakes/{#stakeUnitNo}>
+
+Ward Level
+---
+
+* <http://ldsauth.org/api/ldsorg/stakes/{#stakeUnitNo}/wards/{#wardUnitoNo}/member-list> - member list with phone numbers
+* <http://ldsauth.org/api/ldsorg/stakes/{#stakeUnitNo}/wards/{#wardUnitoNo}/photo-list> - member list with photo urls
+* <http://ldsauth.org/api/ldsorg/stakes/{#stakeUnitNo}/wards/{#wardUnitoNo}/households/{#householdId}> - contact info and pics for a household
+* <http://ldsauth.org/api/ldsorg/stakes/{#stakeUnitNo}/wards/{#wardUnitoNo}/info> - everything except roster
+* <http://ldsauth.org/api/ldsorg/stakes/{#stakeUnitNo}/wards/{#wardUnitoNo}/roster> - merger of member-list, photo-list, and all households
+* <http://ldsauth.org/api/ldsorg/stakes/{#stakeUnitNo}/wards/{#wardUnitoNo}> - all of the above in one
+
+Because `member-list` and `photo-list` have hardly any useful information, `roster` is provided as a convenience
+resource which merges all ward members (often 300+ members, hence 900+ api calls) together.
+
+It is recommended that you request `roster` and `info` at the start of your application.
+`info` will return fairly quickly (< 4 seconds), while `roster` make take quite a while (> 20 seconds).
+You can then grab the `households/{#householdId}` for contacts you need to view immediately
+while you wait for `roster` to complete.
+
+Data Examples
+---
+
+### <http://ldsauth.org/api/ldsorg/me>
+
+```json
+{
+  "currentUserId": 3330000999,
+  "currentUnits": {
+    "areaUnitNo": 790117,
+    "branch": false,
+    "district": false,
+    "mission": false,
+    "newPhotoCount": -1,
+    "stake": true,
+    "stakeName": "Provo Utah YSA 13th Stake",
+    "stakeUnitNo": 519251,
+    "userHasStakeAdminRights": false,
+    "userHasWardAdminRights": false,
+    "userHasWardCalling": false,
+    "userHasWardPhotoAdminRights": false,
+    "usersHomeWard": true,
+    "ward": true,
+    "wardName": "Provo YSA 192nd Ward",
+    "wardUnitNo": 268097
+  },
+  "currentStakes": [
+    {
+      "district": false,
+      "mission": false,
+      "stake": true,
+      "stakeName": "Provo Utah YSA 13th Stake",
+      "stakeUnitNo": 519251,
+      "userHasStakeAdminRights": false,
+      "wards": [
+        {
+          "areaUnitNo": 790117,
+          "branch": false,
+          "district": false,
+          "mission": false,
+          "newPhotoCount": -1,
+          "stake": true,
+          "stakeName": "Provo Utah YSA 13th Stake",
+          "stakeUnitNo": 519251,
+          "userHasStakeAdminRights": false,
+          "userHasWardAdminRights": false,
+          "userHasWardCalling": false,
+          "userHasWardPhotoAdminRights": false,
+          "usersHomeWard": false,
+          "ward": true,
+          "wardName": "Provo YSA 181st Ward",
+          "wardUnitNo": 11428
+        }
+      ]
+    }
+  ]
+}
+```
+
+* <http://ldsauth.org/api/ldsorg/me/household>
+* <http://ldsauth.org/api/ldsorg/me/ward>
+* <http://ldsauth.org/api/ldsorg/me/stake>
+
+TODO
+===
+
+Expire caches of ward data
+
+Store things that ought to be on LDS.org, but aren't
+
+  * facebook url (for all)
+  * home teachers (private to logged in user)
+  * home / visit teachees (private to logged in user)
 
 Email / Phone / Facebook Login
 ---
@@ -101,4 +162,4 @@ npm install
 Run
 ---
 
-node index.js
+node server 3000
