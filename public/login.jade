@@ -1,27 +1,50 @@
 !!!5
 html
   head
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+
+    // Latest compiled and minified CSS
+    link(rel="stylesheet", href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css")
+    // Optional theme
+    link(rel="stylesheet", href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css")
+    // Latest compiled and minified JavaScript
+    script(src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
   body
-    .row
-      .span12
-        h3 LDSAuth
-        p This site is not an official site of the LDS church.
-        form(id="js-login", name="js-login", action="/api/login", method="POST")
-          input(form="js-login", name="username", type="text", placeholder="LDS.org Username")
-          input(form="js-login", name="password", type="password", placeholder="LDS.org Password")
-          button(type="submit") Login
-        p You must login using your LDS.org account. Your username and password will not be saved*.
-    .row
-      .span12
-        p 
-          span If you don't have an LDS.org account 
-          a(href="https://ldsaccount.lds.org/site/register?isMember=true") sign up at lds.org
-          span . Your Membership Record Number can be found on your 
-          strong Partriachical Blessing
-          span  and your 
-          strong Temple Recommend
-        p No site aside from LDS.org should ever ask you for your MRN.
-    .row
+    .container
+      .row
+        .col-md-3
+        .col-md-6
+          h1 Connect with LDSAuth
+
+          form(role="form", id="js-login", name="js-login", action="/api/login", method="POST")
+            .form-group
+              input.form-control(form="js-login", name="username", type="text", placeholder="LDS.org Username")
+            .form-group
+              input.form-control(form="js-login", name="password", type="password", placeholder="LDS.org Password")
+            .form-group
+              button.btn.btn-default(type="submit") Login
+
+          p You must login using your LDS.org account. Don't worry, your username and password will NOT be stored on our server.
+      .row
+        .col-md-3
+        .col-md-6
+          h3 Don't have an LDS.org account?
+          p
+            span You'll need your 
+            string Membership Record Number
+            span  (MRN) which you can get from your
+          ul
+            li
+              strong Partriachical Blessing
+            li
+              strong Temple Recommend
+            li
+              span or  
+              strong Ward Clerk
+          p
+            span Then head on over to  
+            a(href="https://ldsaccount.lds.org/site/register?isMember=true") sign up at lds.org
+    //-.row
       .span6
         //- http://packham.n4m.org/recomm.jpg
         //img(href="/images/annotated-recommend.jpg")
