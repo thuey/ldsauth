@@ -14,6 +14,10 @@ OAuth2 Endpoint URLs
 * Token Endpoint URL: <http://ldsauth.org/oauth/authorize>
 * Profile Endpoint URL: <http://ldsauth.org/api/ldsorg/me>
 
+### Client ID & Secret
+
+There's not yet an automated registration process (and the API is still in beta), so email coolaj86@gmail.com to get an application key.
+
 Profile
 ---
 
