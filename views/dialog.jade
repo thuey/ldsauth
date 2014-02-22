@@ -1,14 +1,43 @@
-p Hi #{user.name}!
-p
-  b #{client.name}
-  span  is requesting access to your account for   
-  b #{scope}
-  span .
+!!!5
+html
+  head
+    title LDS Account Login
+    meta(name="viewport", content="width=device-width, initial-scale=1")
 
-p Do you approve?
+    // Latest compiled and minified CSS
+    link(rel="stylesheet", href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css")
+    // Optional theme
+    link(rel="stylesheet", href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css")
+    // Latest compiled and minified JavaScript
+    script(src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
+  body
+    .container
+      .row
+        .col-md-3
+        .col-md-6
+          //- TODO http://fbshard.apps.familybuilder.com/tree/family/builder/login.php
+          .btn.btn-block.btn-social.btn-lg.btn-ldsauth(style="background-color: #9aa85f")
+            i.fa
+            h3(style="color: white;").signin Login with LDS Account
 
-form(action="/dialog/authorize/decision", method="post")
-  input(name="transaction_id", type="hidden", value="#{transactionId}")
-  div
-    input#allow(type="submit", value="Allow")
-    input#deny(type="submit", value="Deny", name="cancel")
+      .row
+        .col-md-4
+        .col-md-5
+          //-center
+            img(src="/images/moroni.png")
+
+          p
+          p
+            strong #{client.name}
+            span  will receive the following info:
+          
+          ul
+            li #{scope}
+
+          form(role="form", action="/dialog/authorize/decision", method="post") 
+            input(name="transaction_id", type="hidden", value="#{transactionId}")
+            .pull-right
+              .form-group
+                input.btn.btn-danger#deny(type="submit", value="Cancel", name="cancel")
+                span  
+                input.btn.btn-primary#allow(type="submit", value="Okay")

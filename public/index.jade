@@ -1,27 +1,37 @@
 html
   head
     title LDSAuth - Connect to LDS.org
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+
+    // Latest compiled and minified CSS
+    link(rel="stylesheet", href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css")
+    // Optional theme
+    link(rel="stylesheet", href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css")
+    // Latest compiled and minified JavaScript
+    script(src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
+
   body
-    h1 LDSAuth
+    div(style='font-family: Palatino, "Palatino linotype", Georgia, "Times New Roman", serif;')
+      h1 LDSAuth
 
-    p.
-      LDSAuth makes it possible to authenticate through lds.org and use its API with OAuth2, very much like Facebook Connect.
+      p.
+        LDSAuth makes it possible to authenticate through lds.org and use its API with OAuth2, very much like Facebook Connect.
 
-    p 
-      span The API documented at 
-      a(href="https://github.com/LDSOrg/ldsauth") https://github.com/LDSOrg/ldsauth
+      p 
+        span The API documented at 
+        a(href="https://github.com/LDSOrg/ldsauth") https://github.com/LDSOrg/ldsauth
 
-    p You can use any OAuth2 library to connect to LDSAuth using the following endpoints
+      p You can use any OAuth2 library to connect to LDSAuth using the following endpoints
 
-    ul
-      li
-        span Authorization URL:  
-        a(href="http://ldsauth.org/dialog/authorize") http://ldsauth.org/dialog/authorize
-      li
-        span Token URL:  
-        a(href="http://ldsauth.org/oauth/token") http://ldsauth.org/oauth/token
-      li
-        span Profile URL:  
-        a(href="http://ldsauth.org/api/ldsorg/me") http://ldsauth.org/api/ldsorg/me
+      ul
+        li
+          span Authorization URL:  
+          a(href="http://ldsauth.org/dialog/authorize") http://ldsauth.org/dialog/authorize
+        li
+          span Token URL:  
+          a(href="http://ldsauth.org/oauth/token") http://ldsauth.org/oauth/token
+        li
+          span Profile URL:  
+          a(href="http://ldsauth.org/api/ldsorg/me") http://ldsauth.org/api/ldsorg/me
 
-    p There's not currently an automated registration system. To get a client id and secret, send an email to coolaj86@gmail.com.
+      p There's not currently an automated registration system. To get a client id and secret, send an email to coolaj86@gmail.com.
