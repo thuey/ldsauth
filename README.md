@@ -161,9 +161,13 @@ LDSAuth
 git clone git://github.com/LDSorg/ldsauth.git
 pushd ldsauth
 npm install
+npm install -g jade jshint less
 ```
 
 Run
 ---
 
+```bash
+jade public/*.jade
 node server 3000
+```
