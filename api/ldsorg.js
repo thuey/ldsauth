@@ -2,6 +2,38 @@
 
 module.exports.route = function (rest) {
   rest.get(
+    '/api/ldsorg'
+  , function (req, res, next) {
+      var ldsorg = req.user.ldsorg
+        ;
+
+      // if it's been a while, sign back in
+      // TODO this should also be implemented in ldsorg itself
+      if ((Date.now() - req.user.authenticatedAt) < (30 * 60 * 1000)) {
+        next();
+        return;
+      }
+
+      ldsorg.signin(
+        function (err) {
+          console.log('re-sign-in complete');
+          if (err) {
+            res.send(err);
+            return;
+          }
+
+          ldsorg.init(function (data) {
+            req.user.meta = data;
+            req.user.id = data.currentUserId;
+            req.user.authenticatedAt = Date.now();
+            next();
+          }, null);
+        }
+      , { username: req.user.username, password: req.user.password }
+      );
+    }
+  );
+  rest.get(
     '/api/ldsorg/me'
   , function (req, res) {
       // TODO serialize & reconstruct

@@ -47,6 +47,7 @@ module.exports.init = function () {
             , meta: data
             , ldsorg: ldsorg
             , id: data.currentUserId
+            , authenticatedAt: Date.now()
             };
             done(null, serializableUser);
           }, null);

@@ -129,8 +129,6 @@
           }
 
           //req.logIn();
-          console.log('bearer data');
-          console.log(data);
           req.user = data;
           next();
         })(req, res, next);

@@ -1,6 +1,7 @@
 'use strict';
 
-var clients = require('./clientsdb');
+var clients = require('./clientsdb')
+  ;
 
 exports.find = function(id, done) {
   if (!clients.some(function (client) {
