@@ -1,0 +1,29 @@
+.login-box {
+	background: #fff;
+	margin-top:100px;
+	box-shadow: 0 0 10px #000;
+}
+
+.login-header {
+	color: #666;
+	margin-bottom: 5px;
+}
+
+body, html {
+	background: #999 !important;
+}
+
+.description {
+	font-size: 13px;
+	color: #999;
+}
+
+.login-box .btn {
+	width: 100%;
+}
+
+#obtain-account {
+	display: none;
+	font-size: 13px;
+	color: #555;
+}
